@@ -1,6 +1,9 @@
-idf_component_register(SRCS "SettingsStorage.cpp" "SettingsParser.cpp"
-                    INCLUDE_DIRS "include"
-	            REQUIRES spiffs json fmt)
+cmake_minimum_required(VERSION 3.29)
 
-add_subdirectory(deps/art)
-target_link_libraries(${COMPONENT_LIB} PUBLIC libartcpp)
+Project(SettingsStorageLib)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Include the subdirectories
+add_subdirectory(Source)
+add_subdirectory(Tests)
