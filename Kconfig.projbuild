@@ -1,0 +1,53 @@
+menu "PurifyMyWater Settings Module Configuration"
+    config SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+            bool "Force disable persistent storage"
+            default n
+            help
+                Force disable persistent storage. When this feature is enabled, the settings are not saved to the storage. This feature is useful for testing purposes.
+
+    config SETTINGS_STORAGE_FILE_RELATIVE_PATH
+        depends on ! SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+        string "Settings file path relative to the storage partition"
+        default "settings"
+        help
+            Relative path to the settings file. The settings file is stored in the partition with the label specified in the STORAGE_PARTITION_LABEL setting. The file suffix is automatically added to the file name.
+
+    config SETTINGS_STORAGE_FILE_SUFFIX
+        depends on ! SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+        string "Settings file suffix (3 characters)"
+        default "dat"
+        help
+            Suffix of the settings file. The settings file is stored in the partition with the label specified in the STORAGE_PARTITION_LABEL setting. Example: "dat".
+
+    config SETTINGS_STORAGE_CHECKSUM_FILE_SUFFIX
+        depends on ! SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+        string "Checksum file suffix (3 characters)"
+        default "chk"
+        help
+            Suffix of the checksum file. The checksum file is stored in the partition with the label specified in the STORAGE_PARTITION_LABEL setting. Example: "chk".
+
+    config SETTINGS_STORAGE_FILE_PATH
+        depends on ! SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+        string
+        default "${STORAGE_PARTITION_MOUNT_POINT}/${SETTINGS_STORAGE_FILE_RELATIVE_PATH}.${SETTINGS_STORAGE_FILE_SUFFIX}"
+
+    config SETTINGS_STORAGE_CHECKSUM_FILE_PATH
+            depends on ! SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+            string
+            default "${STORAGE_PARTITION_MOUNT_POINT}/${SETTINGS_STORAGE_FILE_RELATIVE_PATH}.${SETTINGS_STORAGE_CHECKSUM_FILE_SUFFIX}"
+
+    config SETTINGS_STORAGE_ENABLE_DELAYED_SAVE
+        depends on ! SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+        bool "Enable delayed save"
+        default y
+        help
+            Enable delayed save feature. When this feature is enabled, the settings are saved to the storage only some time after the settings are changed. This feature is useful to reduce the number of write operations to the storage.
+
+    config SETTINGS_STORAGE_DELAYED_SAVE_TIMEOUT
+        depends on SETTINGS_STORAGE_ENABLE_DELAYED_SAVE
+        int "Delayed save timeout (ms)"
+        default 60000
+        help
+            Timeout in milliseconds after which the settings are saved to the storage after the settings are changed. This setting is used only when the delayed save feature is enabled.
+    
+endmenu
