@@ -202,6 +202,83 @@ TEST(SettingsStorage, GetSettingAsRealTypeMismatch)
     EXPECT_EQ(expected_result, result);
 }
 
+TEST(SettingsStorage, GetSettingAsIntValid)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    int64_t expectedValue = _valueSetting2.settingValueData.integer;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
+TEST(SettingsStorage, GetSettingAsIntInvalidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getSettingAsInt(nullptr, outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsIntVoidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getSettingAsInt("", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsIntKeyNotFound)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::KEY_NOT_FOUND_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getSettingAsInt("menu1/setting3", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsIntTypeMismatch)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::TYPE_MISMATCH_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getSettingAsInt("menu1/setting1", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
 // TEST(SettingsStorage, AddSettingKey)
 // {
 //     NEW_POPULATED_SETTINGS_STORAGE;

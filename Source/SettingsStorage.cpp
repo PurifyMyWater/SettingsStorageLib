@@ -143,7 +143,20 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* ke
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsInt(const char* key, int64_t& outputValue)
 {
+    SettingValue_t* value;
+    SettingError_t result = getSettingValue(key, value);
+    if (result != NO_ERROR)
+    {
+        return result;
+    }
 
+    if (value->settingValueType != INTEGER)
+    {
+        return TYPE_MISMATCH_ERROR;
+    }
+
+    outputValue = value->settingValueData.integer;
+    return NO_ERROR;
 }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* key, char* outputValueBuffer, size_t& outputValueSize) {}
