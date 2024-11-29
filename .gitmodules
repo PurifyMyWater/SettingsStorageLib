@@ -4,3 +4,6 @@
 [submodule "Source/deps/art/libart"]
 	path = Source/deps/art/libart
 	url = https://github.com/armon/libart.git
+[submodule "Source/deps/cJSON"]
+	path = Source/deps/cJSON
+	url = https://github.com/DaveGamble/cJSON.git
