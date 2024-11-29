@@ -13,7 +13,7 @@ public:
      *
      * @param pathToSettingsFile The path to the settings file to parse.
      */
-    SettingsParser(const char* pathToSettingsFile);
+    explicit SettingsParser(const char* pathToSettingsFile);
 
     /**
      * @brief Destroy the Settings Parser object
@@ -24,9 +24,9 @@ public:
      * @brief Read the settings from the provided settings file.
      *
      * @param result The result of the operation.
-     * @return SettingsStorage::Settings_t The settings read from the file or an empty settings object if the file is corrupted.
+     * @return SettingsStorage::Settings_t* A pointer to the settings read from the file or nullptr if the file is corrupted.
      */
-    SettingsStorage::Settings_t readSettingsFromPersistentStorage(ParserError_t* result);
+    SettingsStorage::Settings_t* readSettingsFromPersistentStorage(ParserError_t* result);
 
     /**
      * @brief Write the settings to the provided settings file.

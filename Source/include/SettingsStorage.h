@@ -2,9 +2,10 @@
 #define SETTINGSSTORAGE_SETTINGS_H
 
 #include <string>
-#include <unordered_map>
-#include "libartcpp.h"
 #include "forward_list"
+#include "libartcpp.h"
+
+class SettingsParser;
 
 constexpr size_t PERMISSION_STRING_SIZE = 22;
 
@@ -38,7 +39,7 @@ class SettingsStorage
     public:
         /// Enum that stores the possible errors returned by the SettingsStorage API.
         typedef enum {NO_ERROR = 0, KEY_NOT_FOUND_ERROR, TYPE_MISMATCH_ERROR,
-                        KEY_EXISTS_ERROR, SETTINGS_FILESYSTEM_ERROR,
+                        KEY_EXISTS_ERROR, SETTINGS_FILESYSTEM_ERROR, INVALID_INPUT_ERROR,
                        INSUFFICIENT_BUFFER_SIZE_ERROR } SettingError_t;
 
         /// Enum with the types of data that can be saved.
@@ -75,20 +76,16 @@ class SettingsStorage
         typedef AdaptiveRadixTree<SettingValue_t> Settings_t;
 
         /**
-         * @brief Construct a new Settings Storage object
+         * @brief Build a new Settings Storage object
          *
-         * It will create a new settings object and synchronize it with the settings file.
-         * If the persistent storage is enabled, it will load the settings from the persistent storage.
-         * If the persistent storage is disabled, it will load the default settings.
+         * It will create a new settings storage object and synchronize it with the persistent storage settings file.
          *
          * @param pathToSettingsFile The path to the settings file synchronized with the settings object.
          * @param result The result of the operation
-         * @retval NO_ERROR The settings were successfully loaded.
-         * @retval SETTINGS_FILESYSTEM_ERROR The settings file is corrupted and default settings were loaded instead of saved ones.
-         * @retval INVALID_INPUT_ERROR The pathToSettingsFile is nullptr or "" and default settings were loaded instead of saved ones and the persistent storage was disabled.
          *
-         * @note The settings file will be created if it does not exist.
-         * @note The settings file will be overwritten if it is corrupted.
+         * @retval NO_ERROR The settings were successfully loaded.
+         * @retval SETTINGS_FILESYSTEM_ERROR The settings file is corrupted or doesn't exist, and default settings were loaded instead of saved ones.
+         * @retval INVALID_INPUT_ERROR The pathToSettingsFile is nullptr or "" and default settings were loaded instead of saved ones, and the persistent storage was disabled.
          */
         SettingsStorage(const char* pathToSettingsFile, SettingError_t* result);
 
@@ -99,7 +96,7 @@ class SettingsStorage
 
         /**
          * @brief Check if the settings can be saved in the persistent storage.
-         * @return true if the settings can be saved in the persistent storage, false otherwise.
+         * @return True if the settings can be saved in the persistent storage, false otherwise.
          */
         bool isPersistentStorageEnabled() const;
 
@@ -111,7 +108,6 @@ class SettingsStorage
         /**
          * @brief Registers a component with the provided component information.
          *
-         * @param componentName The name of the component to register.
          * @param componentInfo The information of the component to register.
          * @return SettingError_t The result of the registration operation.
          * @retval NO_ERROR The component was successfully registered.
@@ -129,7 +125,6 @@ class SettingsStorage
 
         /**
          * @brief Restores the default settings of the provided component, or all settings if componentName is "".
-         * After settings restore, it will call writeSettingsToPersistentStorage().
          *
          * @param componentName The name of the component to restore settings for.
          * @return SettingError_t The result of the restore operation.
