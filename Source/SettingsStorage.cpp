@@ -60,6 +60,7 @@ SettingsStorage::SettingsStorage(const char* pathToSettingsFile, SettingError_t*
     {
         *result = INVALID_INPUT_ERROR;
         disablePersistentStorage();
+        this->settings = new Settings_t();
         restoreComponentDefaultSettings(""); // Restore all settings
         return;
     }
@@ -71,7 +72,7 @@ SettingsStorage::SettingsStorage(const char* pathToSettingsFile, SettingError_t*
     this->settingsParser = settingsParser;
 
     SettingsParser::ParserError_t parserError;
-    this->settings = this->settingsParser->readSettingsFromPersistentStorage(&parserError);
+    this->settings = this->settingsParser->readSettingsFromPersistentStorage(&parserError); // Always returns a valid pointer, with either the settings or an empty tree.
 
     if (parserError != SettingsParser::NO_ERROR)
     {
@@ -110,17 +111,59 @@ bool SettingsStorage::disablePersistentStorage()
 
 SettingsStorage::SettingError_t SettingsStorage::registerComponent(ComponentInfo_t& componentInfo) {}
 std::forward_list<SettingsStorage::ComponentInfo_t> SettingsStorage::listRegisteredComponents() {}
-SettingsStorage::SettingError_t SettingsStorage::restoreComponentDefaultSettings(const char* componentName) { return NO_ERROR; }
+SettingsStorage::SettingError_t SettingsStorage::restoreComponentDefaultSettings(const char* componentName)
+{
+
+    return NO_ERROR;
+}
 SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorage() {}
 SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() {}
 SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode,
                                                                   std::forward_list<std::string>& outputKeys)
 {
 }
-SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* key, double& outputValue) {}
-SettingsStorage::SettingError_t SettingsStorage::getSettingAsInt(const char* key, int64_t& outputValue) {}
+
+SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* key, double& outputValue)
+{
+    SettingValue_t* value;
+    SettingError_t result = getSettingValue(key, value);
+    if (result != NO_ERROR)
+    {
+        return result;
+    }
+
+    if (value->settingValueType != REAL)
+    {
+        return TYPE_MISMATCH_ERROR;
+    }
+
+    outputValue = value->settingValueData.real;
+    return NO_ERROR;
+}
+
+SettingsStorage::SettingError_t SettingsStorage::getSettingAsInt(const char* key, int64_t& outputValue)
+{
+
+}
+
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* key, char* outputValueBuffer, size_t& outputValueSize) {}
 SettingsStorage::SettingError_t SettingsStorage::addSettingKey(const char* key, SettingPermissions_t permissions) {}
 SettingsStorage::SettingError_t SettingsStorage::putSettingValue(const char* key, const char* value) {}
 SettingsStorage::SettingError_t SettingsStorage::putSettingValue(const char* key, int64_t value) {}
 SettingsStorage::SettingError_t SettingsStorage::putSettingValue(const char* key, double value) {}
+
+SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key, SettingValue_t*& outputValue) const
+{
+    if (key == nullptr || key[0] == '\0')
+    {
+        return INVALID_INPUT_ERROR;
+    }
+
+    outputValue = this->settings->search(key, static_cast<int>(strlen(key)));
+    if (outputValue == nullptr)
+    {
+        return KEY_NOT_FOUND_ERROR;
+    }
+
+    return NO_ERROR;
+}

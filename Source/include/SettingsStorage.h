@@ -220,6 +220,7 @@ public:
      * @param outputValue The value of the setting.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully retrieved.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      */
@@ -231,6 +232,7 @@ public:
      * @param outputValue The value of the setting.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully retrieved.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      */
@@ -243,6 +245,7 @@ public:
      * @param outputValueSize The size of the outputValueBuffer.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully retrieved.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      * @retval INSUFFICIENT_BUFFER_SIZE_ERROR The outputValueBuffer is null or not big enough to store the value.
@@ -312,6 +315,8 @@ private:
     bool persistentStorageEnabled;
     Settings_t* settings;
     OSShim* osShim;
+
+    SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
 };
 
 #endif // SETTINGSSTORAGE_SETTINGS_H
