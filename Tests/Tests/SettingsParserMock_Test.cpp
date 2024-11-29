@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "SettingsParserMock.h"
+#include "gtest/gtest.h"
 
 TEST(SettingsParserMock, Constructor)
 {
@@ -17,7 +17,7 @@ TEST(SettingsParserMock, ReadSettingsFromPersistentStorage)
 {
     // Want
     SettingsStorage::Settings_t settings;
-    SettingsStorage::SettingValue_t value = { .settingValueType = SettingsStorage::INTEGER, .settingValueData = 56, .settingPermissions = SettingPermissions_t::SYSTEM};
+    SettingsStorage::SettingValue_t value = {.settingValueType = SettingsStorage::INTEGER, .settingValueData = 56, .settingPermissions = SettingPermissions_t::SYSTEM};
     settings.insert("key", sizeof("key"), &value);
     SettingsParser::ParserError_t result = SettingsParser::ParserError_t::NO_ERROR;
 
@@ -38,7 +38,7 @@ TEST(SettingsParserMock, WriteSettingsToPersistentStorage)
 {
     // Want
     SettingsStorage::Settings_t settings;
-    SettingsStorage::SettingValue_t value = { .settingValueType = SettingsStorage::INTEGER, .settingValueData = 56, .settingPermissions = SettingPermissions_t::SYSTEM};
+    SettingsStorage::SettingValue_t value = {.settingValueType = SettingsStorage::INTEGER, .settingValueData = 56, .settingPermissions = SettingPermissions_t::SYSTEM};
     settings.insert("key", sizeof("key"), &value);
     SettingsParser::ParserError_t result = SettingsParser::ParserError_t::NO_ERROR;
 
