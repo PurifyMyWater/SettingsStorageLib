@@ -6,7 +6,12 @@
 class SettingsParser
 {
 public:
-    typedef enum {NO_ERROR = 0, } ParserError_t;
+    typedef enum
+    {
+        NO_ERROR = 0,
+        INVALID_PATH_ERROR,
+        FILE_NOT_FOUND_ERROR
+    } ParserError_t;
 
     /**
      * @brief Construct a new Settings Parser object
@@ -26,7 +31,7 @@ public:
      * @param result The result of the operation.
      * @return SettingsStorage::Settings_t* A pointer to the settings read from the file or nullptr if the file is corrupted.
      */
-    SettingsStorage::Settings_t* readSettingsFromPersistentStorage(ParserError_t* result);
+    virtual SettingsStorage::Settings_t* readSettingsFromPersistentStorage(ParserError_t* result) const;
 
     /**
      * @brief Write the settings to the provided settings file.
@@ -34,7 +39,7 @@ public:
      * @param settings The settings to write to the file.
      * @return ParserError_t The result of the operation.
      */
-    ParserError_t writeSettingsToPersistentStorage(SettingsStorage::Settings_t& settings);
+    virtual ParserError_t writeSettingsToPersistentStorage(SettingsStorage::Settings_t& settings);
 };
 
 #endif // SETTINGSSTORAGE_SETTINGSPARSER_H
