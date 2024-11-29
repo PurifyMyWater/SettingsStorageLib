@@ -279,6 +279,104 @@ TEST(SettingsStorage, GetSettingAsIntTypeMismatch)
     EXPECT_EQ(expected_result, result);
 }
 
+TEST(SettingsStorage, GetSettingAsStringValid)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    const char* expectedValue = _valueSetting3.settingValueData.string;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ(expectedValue, outputValueBuffer);
+}
+
+TEST(SettingsStorage, GetSettingAsStringInvalidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getSettingAsString(nullptr, outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsStringVoidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getSettingAsString("", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsStringKeyNotFound)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::KEY_NOT_FOUND_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getSettingAsString("menu2/setting4", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsStringTypeMismatch)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::TYPE_MISMATCH_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getSettingAsString("menu1/setting1", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetSettingAsStringInsufficientBufferSize)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INSUFFICIENT_BUFFER_SIZE_ERROR;
+
+    // When
+    char outputValueBuffer[5];
+    size_t outputValueSize = 5;
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
 // TEST(SettingsStorage, AddSettingKey)
 // {
 //     NEW_POPULATED_SETTINGS_STORAGE;

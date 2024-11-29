@@ -159,8 +159,37 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsInt(const char* key
     return NO_ERROR;
 }
 
-SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* key, char* outputValueBuffer, size_t& outputValueSize) {}
 SettingsStorage::SettingError_t SettingsStorage::addSettingKey(const char* key, SettingPermissions_t permissions) {}
+SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* key, char* outputValueBuffer, size_t outputValueSize)
+{
+    if (outputValueBuffer == nullptr)
+    {
+        return INVALID_INPUT_ERROR;
+    }
+
+    SettingValue_t* value;
+    SettingError_t result = getSettingValue(key, value);
+    if (result != NO_ERROR)
+    {
+        return result;
+    }
+
+    if (value->settingValueType != STRING)
+    {
+        return TYPE_MISMATCH_ERROR;
+    }
+    size_t valueLen = strlen(value->settingValueData.string);
+    if (valueLen >= outputValueSize)
+    {
+        return INSUFFICIENT_BUFFER_SIZE_ERROR;
+    }
+
+    strncpy(outputValueBuffer, value->settingValueData.string, outputValueSize);
+    outputValueBuffer[valueLen] = '\0';
+
+    return NO_ERROR;
+}
+
 SettingsStorage::SettingError_t SettingsStorage::putSettingValue(const char* key, const char* value) {}
 SettingsStorage::SettingError_t SettingsStorage::putSettingValue(const char* key, int64_t value) {}
 SettingsStorage::SettingError_t SettingsStorage::putSettingValue(const char* key, double value) {}
