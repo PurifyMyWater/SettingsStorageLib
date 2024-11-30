@@ -19,9 +19,9 @@ constexpr size_t PERMISSION_STRING_SIZE = 22;
  * The permissions are stored in a bitfield, where each bit represents a permission.
  * If a bit is set in a flag position, it means that the permission is granted, and if the bit is cleared, the permission is not granted.
  * The permissions are:
- * - SYSTEM: Used for settings that are critical for the system to work. They should not be changed by the end user or admin.
- * - ADMIN: Used for settings that are critical for the system to work, but may need human configuration. They should not be changed by the end user.
- * - USER: Used for settings that are not critical for the system to work. They can be changed by the end user.
+ * — SYSTEM: Used for settings that are critical for the system to work. They should not be changed by the end user or admin.
+ * — ADMIN: Used for settings that are critical for the system to work, but may need human configuration. They should not be changed by the end user.
+ * — USER: Used for settings that are not critical for the system to work. They can be changed by the end user.
  */
 enum class SettingPermissions_t : uint8_t
 {
@@ -44,6 +44,9 @@ SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rh
 
 /// This operator overload allows the enum SettingPermissions_t to have a bitwise AND operator.
 SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rhs);
+
+/// All the permissions that can be granted to a setting.
+const SettingPermissions_t ALL_PERMISSIONS = (SettingPermissions_t::USER | SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM);
 
 /// This function returns a formatted string of the permissions described in the parameter permission
 const char* settingPermissionToString(SettingPermissions_t permission, char* permissionString, size_t permissionStringSize);
@@ -77,7 +80,7 @@ public:
     {
         double real;
         int64_t integer;
-        const char* string;
+        char* string;
     } SettingValueData_t;
 
     /// The value of each setting element.
@@ -97,7 +100,7 @@ public:
     /**
      * The function data type that the settings restore functionality uses.
      * All modules that use settings must register a function of this type where they restore the default settings for the module using addSettingKey(...) and putSettingValue(...).
-     * It is guaranteed that the structure of the settings map paths used in the restore process do not exist prior to the call to this function.
+     * It is guaranteed that the structure of the settings map paths used in the restore process do not exist before the call to this function.
      */
     typedef void (*RestoreComponentDefaultSettingsCallback_t)();
 
@@ -146,7 +149,7 @@ public:
      Don't assume the persistent storage is enabled nor disabled if this function returns false.
      Use isPersistentStorageEnabled() to check the persistent storage status.
      */
-    bool disablePersistentStorage();
+    [[nodiscard]] bool disablePersistentStorage();
 
     /**
      * @brief Registers a component with the provided component information.
@@ -158,13 +161,13 @@ public:
      * @retval COMPONENT_ALREADY_REGISTERED_ERROR If componentName is already registered.
      * @retval INVALID_INPUT_ERROR If componentInfo contains invalid information (an empty componentTopLevelPathsList or a null restoreComponentDefaultSettingsCallback).
      */
-    SettingError_t registerComponent(ComponentInfo_t& componentInfo);
+    [[nodiscard]] SettingError_t registerComponent(ComponentInfo_t& componentInfo);
 
     /**
      * @brief Get a list of all the components registered in the settings storage component.
      * @return a list of all the components registered in the settings storage component.
      */
-    std::forward_list<ComponentInfo_t> listRegisteredComponents();
+    [[nodiscard]] std::forward_list<ComponentInfo_t> listRegisteredComponents();
 
     /**
      * @brief Restores the default settings of the provided component, or all settings if componentName is "".
@@ -177,7 +180,7 @@ public:
      *
      * @note This function will call the restoreComponentDefaultSettingsCallback of the component to restore the default settings.
      */
-    SettingError_t restoreComponentDefaultSettings(const char* componentName);
+    [[nodiscard]] SettingError_t restoreComponentDefaultSettings(const char* componentName);
 
     /**
      * @brief This function saves the settings to the persistent storage, replacing the old copy ot them.
@@ -190,7 +193,7 @@ public:
      * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted and the settings were not saved.
      * @retval SETTINGS_FILESYSTEM_ERROR The persisten storage is disabled and the settings were not saved.
      */
-    SettingError_t storeSettingsInPersistentStorage();
+    [[nodiscard]] SettingError_t storeSettingsInPersistentStorage();
 
     /**
      * @brief This function loads the settings from the persistent storage, replacing the old copy ot them.
@@ -198,7 +201,7 @@ public:
      * @retval NO_ERROR The settings were successfully loaded.
      * @retval SETTINGS_FILESYSTEM_ERROR The settings file is corrupted and settings were not modified.
      */
-    SettingError_t loadSettingsFromPersistentStorage();
+    [[nodiscard]] SettingError_t loadSettingsFromPersistentStorage();
 
     /**
      * @brief This list the settings keys that match the provided key prefix.
@@ -212,37 +215,40 @@ public:
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
      * @retval INVALID_INPUT_ERROR The filterMode is invalid.
      */
-    SettingError_t listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode, std::forward_list<std::string>& outputKeys);
+    [[nodiscard]] SettingError_t listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode, std::forward_list<std::string>& outputKeys);
 
     /**
      * @brief This function returns the value of the setting with the provided key.
      * @param key The key of the setting to get.
      * @param outputValue The value of the setting.
+     * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the permissions are not returned.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully retrieved.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      */
-    SettingError_t getSettingAsReal(const char* key, double& outputValue);
+    [[nodiscard]] SettingError_t getSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
      * @brief This function returns the value of the setting with the provided key.
      * @param key The key of the setting to get.
      * @param outputValue The value of the setting.
+     * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the permissions are not returned.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully retrieved.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      */
-    SettingError_t getSettingAsInt(const char* key, int64_t& outputValue);
+    [[nodiscard]] SettingError_t getSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
      * @brief This function returns the value of the setting with the provided key.
      * @param key The key of the setting to get.
      * @param outputValueBuffer The value of the setting. Must be a buffer with enough space to store the value.
      * @param outputValueSize The size of the outputValueBuffer.
+     * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the permissions are not returned.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully retrieved.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
@@ -251,7 +257,7 @@ public:
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      * @retval INSUFFICIENT_BUFFER_SIZE_ERROR The outputValueBuffer is null or not big enough to store the value.
      */
-    SettingError_t getSettingAsString(const char* key, char* outputValueBuffer, size_t outputValueSize);
+    [[nodiscard]] SettingError_t getSettingAsString(const char* key, char* outputValueBuffer, size_t outputValueSize, SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
@@ -265,7 +271,7 @@ public:
      *
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
-    SettingError_t addSettingKey(const char* key, SettingPermissions_t permissions);
+    [[nodiscard]] SettingError_t addSettingKey(const char* key, SettingPermissions_t permissions) const;
 
     /**
      * @brief This function updates the value of the setting with the provided key.
@@ -280,7 +286,7 @@ public:
      *
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
-    SettingError_t putSettingValue(const char* key, const char* value);
+    [[nodiscard]] SettingError_t putSettingValueAsString(const char* key, const char* value) const;
 
     /**
      * @brief This function updates the value of the setting with the provided key.
@@ -294,7 +300,7 @@ public:
      *
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
-    SettingError_t putSettingValue(const char* key, int64_t value);
+    [[nodiscard]] SettingError_t putSettingValueAsInt(const char* key, int64_t value) const;
 
     /**
      * @brief This function updates the value of the setting with the provided key.
@@ -308,7 +314,7 @@ public:
      *
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
-    SettingError_t putSettingValue(const char* key, double value);
+    [[nodiscard]] SettingError_t putSettingValueAsReal(const char* key, double value) const;
 
 private:
     OSShim_Mutex* moduleConfigMutex;
@@ -317,6 +323,7 @@ private:
     Settings_t* settings;
     OSShim* osShim;
 
+    static bool validatePermissions(SettingPermissions_t permissions);
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
 };
 
