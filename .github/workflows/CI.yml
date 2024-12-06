@@ -97,3 +97,35 @@ jobs:
             -   name: Clang Format Fail Check
                 if: steps.linter.outputs.clang-format-checks-failed > 0
                 run: exit 0 # To enable or disable this check as an error, run exit 1 / exit 0.
+    Sonar:
+        runs-on: ubuntu-latest
+        env:
+            BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+        steps:
+            -   name: Cache git submodules
+                uses: actions/cache@v4
+                with:
+                    key: "${{ runner.os }}-git-${{ hashFiles('.git/modules/*/HEAD') }}" # Cache will be dismissed if any submodule change
+                    path: ".git"
+                    restore-keys: "${{ runner.os }}-git-"
+                    fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
+            -   name: "Checkout repository"
+                uses: actions/checkout@v4
+                with:
+                    submodules: 'recursive'
+                    token: ${{ secrets.SubmoduleToken }}
+                    
+            -   name: Install sonar-scanner and build-wrapper
+                uses: sonarsource/sonarcloud-github-c-cpp@v3
+            -   name: Run build-wrapper
+                run: |
+                    mkdir build
+                    cmake -S . -B build
+                    build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build --config Release
+            -   name: Run sonar-scanner
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }} # Put the name of your token here
+                run: |
+                    sonar-scanner --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
