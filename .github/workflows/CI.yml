@@ -129,9 +129,9 @@ jobs:
             -   name: Configure CMake
                 run: sudo apt install gcovr && cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
 
-            -   name: Coverage Report
+            -   name: Generate Coverage Report
                 working-directory: ${{runner.workspace}}/build
-                run: cmake --build . --target coverage && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml
+                run: cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml
 
             -   name: Run build-wrapper
                 run: |
