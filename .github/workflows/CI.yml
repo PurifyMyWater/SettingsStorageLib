@@ -112,13 +112,13 @@ jobs:
                     key: "${{ runner.os }}-git-${{ hashFiles('.git/modules/*/HEAD') }}" # Cache will be dismissed if any submodule change
                     path: ".git"
                     restore-keys: "${{ runner.os }}-git-"
-                    fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
             -   name: "Checkout repository"
                 uses: actions/checkout@v4
                 with:
                     submodules: 'recursive'
                     token: ${{ secrets.SubmoduleToken }}
+                    fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
                     
             -   name: Install sonar-scanner and build-wrapper
                 uses: sonarsource/sonarcloud-github-c-cpp@v3
