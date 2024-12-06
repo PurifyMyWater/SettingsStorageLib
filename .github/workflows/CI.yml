@@ -123,18 +123,18 @@ jobs:
                     token: ${{ secrets.SubmoduleToken }}
                     fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
-            -   name: Install sonar-scanner and build-wrapper
-                uses: sonarsource/sonarcloud-github-c-cpp@v3
-
             -   name: Configure CMake
                 run: sudo apt install gcovr && cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
 
             -   name: Generate Coverage Report
                 working-directory: ${{runner.workspace}}/build
-                run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build -DCMAKE_BUILD_TYPE=Debug && cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml && cat coverage.xml
+                run: cmake -DCMAKE_BUILD_TYPE=Debug -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build && cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml && cat coverage.xml
 
             -   name: Find coverage.xml
                 run: find /home -type f -name coverage.xml
+
+            -   name: Install sonar-scanner and build-wrapper
+                uses: sonarsource/sonarcloud-github-c-cpp@v3
 
             -   name: Run build-wrapper
                 run: |
