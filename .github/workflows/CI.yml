@@ -136,7 +136,7 @@ jobs:
                     build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build/ --config Release
 
             -   name: Check for coverage.xml
-                run: ls -la ${{ env.BUILD_WRAPPER_OUT_DIR }}
+                run: find / -type f -name "coverage.xml"
 
             -   name: Run sonar-scanner
                 env:
