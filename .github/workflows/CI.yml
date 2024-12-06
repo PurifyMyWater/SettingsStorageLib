@@ -131,7 +131,7 @@ jobs:
 
             -   name: Coverage Report
                 working-directory: ${{runner.workspace}}/build
-                run: cmake --build . --target coverage
+                run: cmake --build . --target coverage && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml
 
             -   name: Run build-wrapper
                 run: |
