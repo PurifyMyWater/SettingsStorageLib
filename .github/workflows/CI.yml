@@ -122,7 +122,7 @@ jobs:
                 run: |
                     mkdir build
                     cmake -S . -B build
-                    build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build --config Release
+                    build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
             -   name: Run sonar-scanner
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
