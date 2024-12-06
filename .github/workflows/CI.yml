@@ -131,7 +131,7 @@ jobs:
 
             -   name: Generate Coverage Report
                 working-directory: ${{runner.workspace}}/build
-                run: cmake --build . -DCMAKE_BUILD_TYPE=Debug && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml && cat coverage.xml
+                run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build -DCMAKE_BUILD_TYPE=Debug && cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml && cat coverage.xml
 
             -   name: Find coverage.xml
                 run: find /home -type f -name coverage.xml
