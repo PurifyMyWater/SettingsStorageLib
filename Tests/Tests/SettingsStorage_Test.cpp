@@ -826,7 +826,7 @@ TEST(SettingsStorage, AddSettingKeyInvalidPermissions)
 
     // Want
     SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
-    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(-1);
+    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1);
 
     // When
     result = settingsStorage.addSettingKey("menu2/setting4", permissions);

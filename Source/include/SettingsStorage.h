@@ -46,7 +46,7 @@ SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rh
 SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rhs);
 
 /// All the permissions that can be granted to a setting.
-const SettingPermissions_t ALL_PERMISSIONS = (SettingPermissions_t::USER | SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM);
+const SettingPermissions_t ALL_PERMISSIONS = SettingPermissions_t::USER | SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM;
 
 /// This function returns a formatted string of the permissions described in the parameter permission
 const char* settingPermissionToString(SettingPermissions_t permission, char* permissionString, size_t permissionStringSize);
