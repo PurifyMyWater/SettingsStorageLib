@@ -131,7 +131,10 @@ jobs:
 
             -   name: Generate Coverage Report
                 working-directory: ${{runner.workspace}}/build
-                run: cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml
+                run: cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml && cat coverage.xml
+
+            -   name: Find coverage.xml
+                run: find /home -type f -name coverage.xml
 
             -   name: Run build-wrapper
                 run: |
