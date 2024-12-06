@@ -126,11 +126,12 @@ jobs:
             -   name: Install sonar-scanner and build-wrapper
                 uses: sonarsource/sonarcloud-github-c-cpp@v3
 
-            -   name: Install coverage dependencies
-                run: sudo apt install gcovr
+            -   name: Configure CMake
+                run: sudo apt install gcovr && cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
 
             -   name: Coverage Report
-                run: cmake --build build --target coverage
+                working-directory: ${{runner.workspace}}/build
+                run: cmake --build . --target coverage
 
             -   name: Run build-wrapper
                 run: |
