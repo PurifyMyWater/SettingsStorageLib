@@ -37,7 +37,7 @@ jobs:
                     token: ${{ secrets.SubmoduleToken }}
 
             -   name: Configure CMake
-                run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
+                run: apt install gcovr && cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
 
             -   name: Build
                 working-directory: ${{runner.workspace}}/build
