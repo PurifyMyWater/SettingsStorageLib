@@ -1,5 +1,3 @@
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
 if (NOT ESP_PLATFORM) # Only configure tests if we are building in a computer.
 
     project(SettingsStorage_GoogleTests)
@@ -21,13 +19,6 @@ if (NOT ESP_PLATFORM) # Only configure tests if we are building in a computer.
     target_link_libraries(SettingsStorage_GoogleTestsExe SettingsStorageLib LinuxOSShim)
 
     target_link_libraries(SettingsStorage_GoogleTestsExe gtest gtest_main)
-
-    include(CodeCoverage)
-    append_coverage_compiler_flags()
-
-    setup_target_for_coverage_gcovr_xml(NAME coverage
-            EXECUTABLE SettingsStorage_GoogleTestsExe
-    )
 
 else ()
     message(STATUS "Skipping Google Test configuration for target '${PROJECT_NAME}' because we are building for an embedded target")

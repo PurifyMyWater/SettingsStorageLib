@@ -133,9 +133,13 @@ jobs:
                     mkdir build
                     cmake -S . -B build
                     build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build/ --config Release
+
+            -   name: Check for coverage.xml
+                run: ls -la ${{ env.BUILD_WRAPPER_OUT_DIR }}
+
             -   name: Run sonar-scanner
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Put the name of your token here
+                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
                 run: |
                     sonar-scanner --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json" -X
