@@ -74,7 +74,7 @@ jobs:
                     token: ${{ secrets.SubmoduleToken }}
 
             -   name: Configure CMake
-                run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
+                run: sudo apt install gcovr && cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
 
             -   name: Linter
                 uses: cpp-linter/cpp-linter-action@v2
@@ -124,6 +124,10 @@ jobs:
                     
             -   name: Install sonar-scanner and build-wrapper
                 uses: sonarsource/sonarcloud-github-c-cpp@v3
+
+            -   name: Install coverage dependencies
+                run: sudo apt install gcovr
+            
             -   name: Run build-wrapper
                 run: |
                     mkdir build
