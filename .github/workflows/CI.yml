@@ -130,8 +130,8 @@ jobs:
                 working-directory: ${{runner.workspace}}/build
                 run: cmake -DCMAKE_BUILD_TYPE=Debug -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build && cmake --build . && ./Tests/SettingsStorage_GoogleTestsExe && gcovr --sonarqube > coverage.xml && cat coverage.xml
 
-            -   name: Find coverage.xml
-                run: find /home -type f -name coverage.xml
+            # -   name: Find coverage.xml
+            #     run: find /home -type f -name coverage.xml
 
             -   name: Install sonar-scanner and build-wrapper
                 uses: sonarsource/sonarcloud-github-c-cpp@v3
