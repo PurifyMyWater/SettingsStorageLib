@@ -242,8 +242,7 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* 
     {
         return TYPE_MISMATCH_ERROR;
     }
-    size_t valueLen = strlen(value->settingValueData.string);
-    if (valueLen >= outputValueSize)
+    if (strlen(value->settingValueData.string) >= outputValueSize) // Only allow the string to be copied if it fits in the buffer. (The == is to account for the null terminator)
     {
         return INSUFFICIENT_BUFFER_SIZE_ERROR;
     }
@@ -252,8 +251,8 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* 
     {
         *outputPermissions = value->settingPermissions;
     }
-    strncpy(outputValueBuffer, value->settingValueData.string, outputValueSize);
-    outputValueBuffer[valueLen] = '\0';
+    strcpy(outputValueBuffer, value->settingValueData.string);
+    outputValueBuffer[outputValueSize] = '\0';
 
     return NO_ERROR;
 }

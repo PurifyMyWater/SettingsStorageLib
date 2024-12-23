@@ -7,7 +7,7 @@
 #include "list"
 #include "set"
 
-#define SETTINGS_STORAGE_MUTEX_TIMEOUT_MS 100
+constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
 class SettingsParser;
 
