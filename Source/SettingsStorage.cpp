@@ -4,19 +4,13 @@
 #include <cstring>
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
-SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs)
-{
-    return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) | static_cast<std::byte>(rhs));
-}
+SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs) { return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) | static_cast<std::byte>(rhs)); }
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise AND operator.
-SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rhs)
-{
-    return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) & static_cast<std::byte>(rhs));
-}
+SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rhs) { return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) & static_cast<std::byte>(rhs)); }
 
 // This function returns a formatted string of the permissions described in the parameter permission.
-const char* settingPermissionToString(SettingPermissions_t permission, char* permissionString, size_t permissionStringSize)
+const char* settingPermissionToString(const SettingPermissions_t permission, char* permissionString, const size_t permissionStringSize)
 {
     if (permissionString == nullptr || permissionStringSize < PERMISSION_STRING_SIZE)
     {
@@ -44,6 +38,8 @@ const char* settingPermissionToString(SettingPermissions_t permission, char* per
     }
     return permissionString;
 }
+
+
 SettingsStorage::SettingsStorage(const char* pathToSettingsFile, SettingError_t* result, OSShim& osShim, SettingsParser* settingsParser)
 {
     *result = NO_ERROR;
@@ -267,7 +263,7 @@ SettingsStorage::SettingError_t SettingsStorage::addSettingKey(const char* key, 
     auto* newValue = new SettingValue_t();
     newValue->settingPermissions = permissions;
     newValue->settingValueType = VOID;
-    newValue->settingValueData = {0};
+    newValue->settingValueData = {};
     if (this->settings->insertIfNotExists(key, static_cast<int>(strlen(key)), newValue) != nullptr)
     {
         delete newValue;
