@@ -834,3 +834,377 @@ TEST(SettingsStorage, AddSettingKeyInvalidPermissions)
     // Then
     EXPECT_EQ(expected_result, result);
 }
+
+TEST(SettingsStorage, listSettingsKeysVoidKeyPrefix)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidMatchSettingsWithAllPermissionsListedResultAny)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", ALL_PERMISSIONS);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", ALL_PERMISSIONS, MatchSettingsWithAllPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidMatchSettingsWithAllPermissionsListedResultNone)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", ALL_PERMISSIONS, MatchSettingsWithAllPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidMatchSettingsWithAnyPermissionsListedResultAll)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", SettingPermissions_t::ADMIN);
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting3", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidMatchSettingsWithAnyPermissionsListedResultNone)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", NO_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidMatchSettingsWithAnyPermissionsListedResultMixed)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", SettingPermissions_t::ADMIN);
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM, MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidExcludeSettingsWithAllPermissionsListedResultAll)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::ADMIN | SettingPermissions_t::USER, ExcludeSettingsWithAllPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidExcludeSettingsWithAllPermissionsListedResultNone)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::USER, ExcludeSettingsWithAllPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidExcludeSettingsWithAllPermissionsListedResultMixed)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", SettingPermissions_t::ADMIN | SettingPermissions_t::USER);
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::ADMIN | SettingPermissions_t::USER, ExcludeSettingsWithAllPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidExcludeSettingsWithAnyPermissionsListedResultMixed)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", SettingPermissions_t::ADMIN | SettingPermissions_t::USER);
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::ADMIN, ExcludeSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysValidExcludeSettingsWithAnyPermissionsListedResultAll)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", SettingPermissions_t::ADMIN | SettingPermissions_t::USER);
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::SYSTEM, ExcludeSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting3", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+TEST(SettingsStorage, listSettingsKeysValidExcludeSettingsWithAnyPermissionsListedResultNone)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    result = settingsStorage.addSettingKey("menu1/setting3", SettingPermissions_t::ADMIN | SettingPermissions_t::USER);
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu", SettingPermissions_t::USER | SettingPermissions_t::SYSTEM, ExcludeSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, listSettingsKeysInvalidKeyPrefix)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys(nullptr, ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, listSettingsKeysInvalidPermissions)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu1", static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1), MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, listSettingsKeysInvalidFilterMode)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("menu1", ALL_PERMISSIONS, static_cast<SettingPermissionsFilterMode_t>(-1), outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}

@@ -110,13 +110,77 @@ bool SettingsStorage::disablePersistentStorage()
 }
 
 SettingsStorage::SettingError_t SettingsStorage::registerComponent(ComponentInfo_t& componentInfo) {}
-std::forward_list<SettingsStorage::ComponentInfo_t> SettingsStorage::listRegisteredComponents() {}
+std::set<SettingsStorage::ComponentInfo_t> SettingsStorage::listRegisteredComponents() {}
 SettingsStorage::SettingError_t SettingsStorage::restoreComponentDefaultSettings(const char* componentName) { return NO_ERROR; }
 SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorage() {}
 SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() {}
-SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode,
-                                                                  std::forward_list<std::string>& outputKeys)
+
+int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
 {
+    SettingsListCallbackData_t* callbackData = static_cast<SettingsListCallbackData_t*>(data);
+    SettingPermissions_t permissions = std::get<0>(*callbackData);
+    SettingPermissionsFilterMode_t filterMode = std::get<1>(*callbackData);
+    SettingsKeysList_t* outputKeys = std::get<2>(*callbackData);
+    SettingValue_t* settingValue = static_cast<SettingValue_t*>(value);
+
+    switch (filterMode)
+    {
+        case MatchSettingsWithAnyPermissionsListed:
+        {
+            if (static_cast<uint32_t>(settingValue->settingPermissions & permissions) > 0) // If a bit is set in both, the result is greater than 0.
+            {
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+            }
+            return NO_ERROR;
+        }
+
+        case MatchSettingsWithAllPermissionsListed:
+        {
+            if (settingValue->settingPermissions == permissions)
+            {
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+            }
+            return NO_ERROR;
+        }
+
+        case ExcludeSettingsWithAllPermissionsListed:
+        {
+            if (settingValue->settingPermissions != permissions)
+            {
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+            }
+            return NO_ERROR;
+        }
+
+        case ExcludeSettingsWithAnyPermissionsListed:
+        {
+            if (static_cast<uint32_t>(settingValue->settingPermissions & permissions) == 0)
+            {
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+            }
+            return NO_ERROR;
+        }
+        default:
+            return INVALID_INPUT_ERROR;
+    }
+}
+
+SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode,
+                                                                  SettingsKeysList_t& outputKeys) const
+{
+    if (keyPrefix == nullptr)
+    {
+        return INVALID_INPUT_ERROR;
+    }
+
+    if (!validatePermissions(permissions))
+    {
+        return INVALID_INPUT_ERROR;
+    }
+
+    SettingsListCallbackData_t callbackData = std::make_tuple(permissions, filterMode, &outputKeys);
+    int res = settings->iterateOverPrefix(keyPrefix, static_cast<int>(strlen(keyPrefix)), listSettingsKeysCallback, &callbackData);
+    return static_cast<SettingError_t>(res);
 }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions) const

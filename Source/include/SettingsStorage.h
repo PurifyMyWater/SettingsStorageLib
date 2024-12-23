@@ -3,8 +3,9 @@
 
 #include <string>
 #include "OSShim.h"
-#include "forward_list"
 #include "libartcpp.h"
+#include "list"
+#include "set"
 
 #define SETTINGS_STORAGE_MUTEX_TIMEOUT_MS 100
 
@@ -33,10 +34,10 @@ enum class SettingPermissions_t : uint8_t
 /// Enum that stores the filter modes for the permissions.
 enum SettingPermissionsFilterMode_t
 {
-    MatchAll = 0,
-    MatchAny,
-    ExcludeAll,
-    ExcludeAny
+    MatchSettingsWithAllPermissionsListed = 0,
+    MatchSettingsWithAnyPermissionsListed,
+    ExcludeSettingsWithAllPermissionsListed,
+    ExcludeSettingsWithAnyPermissionsListed
 };
 
 /// This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
@@ -45,8 +46,11 @@ SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rh
 /// This operator overload allows the enum SettingPermissions_t to have a bitwise AND operator.
 SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rhs);
 
-/// All the permissions that can be granted to a setting.
+/// All permissions are granted to a setting.
 const SettingPermissions_t ALL_PERMISSIONS = SettingPermissions_t::USER | SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM;
+
+/// No permissions are granted to a setting.
+constexpr SettingPermissions_t NO_PERMISSIONS = static_cast<SettingPermissions_t>(0);
 
 /// This function returns a formatted string of the permissions described in the parameter permission
 const char* settingPermissionToString(SettingPermissions_t permission, char* permissionString, size_t permissionStringSize);
@@ -54,6 +58,8 @@ const char* settingPermissionToString(SettingPermissions_t permission, char* per
 class SettingsStorage
 {
 public:
+    typedef std::list<std::string> SettingsKeysList_t;
+
     /// Enum that stores the possible errors returned by the SettingsStorage API.
     typedef enum
     {
@@ -108,7 +114,7 @@ public:
     typedef struct ComponentInfo_t
     {
         std::string componentName;
-        std::forward_list<std::string> componentTopLevelPathsList;
+        std::set<std::string> componentTopLevelPathsList;
         RestoreComponentDefaultSettingsCallback_t restoreComponentDefaultSettingsCallback;
     } ComponentInfo_t;
 
@@ -164,10 +170,10 @@ public:
     [[nodiscard]] SettingError_t registerComponent(ComponentInfo_t& componentInfo);
 
     /**
-     * @brief Get a list of all the components registered in the settings storage component.
-     * @return a list of all the components registered in the settings storage component.
+     * @brief Get a set of all the components registered in the settings storage component.
+     * @return A set of all the components registered in the settings storage component.
      */
-    [[nodiscard]] std::forward_list<ComponentInfo_t> listRegisteredComponents();
+    [[nodiscard]] std::set<ComponentInfo_t> listRegisteredComponents();
 
     /**
      * @brief Restores the default settings of the provided component, or all settings if componentName is "".
@@ -204,18 +210,18 @@ public:
     [[nodiscard]] SettingError_t loadSettingsFromPersistentStorage();
 
     /**
-     * @brief This list the settings keys that match the provided key prefix.
-     * @param keyPrefix The prefix of the keys to list.
+     * @brief This lists the settings keys that match the provided key prefix.
+     * @param keyPrefix The prefix of the keys to list. An empty string will list all keys.
      * @param permissions The permissions filter to apply to the keys.
      * @param filterMode The filter mode to apply to the permissions.
-     * @param outputKeys The list of keys that match the provided key prefix.
+     * @param outputKeys The list of keys that match the provided key prefix ordered in lexical order.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The settings were successfully listed.
-     * @retval INVALID_INPUT_ERROR The keyPrefix is nullptr or "".
+     * @retval INVALID_INPUT_ERROR The keyPrefix is nullptr.
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
      * @retval INVALID_INPUT_ERROR The filterMode is invalid.
      */
-    [[nodiscard]] SettingError_t listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode, std::forward_list<std::string>& outputKeys);
+    [[nodiscard]] SettingError_t listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode, SettingsKeysList_t& outputKeys) const;
 
     /**
      * @brief This function returns the value of the setting with the provided key.
@@ -317,12 +323,14 @@ public:
     [[nodiscard]] SettingError_t putSettingValueAsReal(const char* key, double value) const;
 
 private:
+    typedef std::tuple<SettingPermissions_t, SettingPermissionsFilterMode_t, SettingsKeysList_t*> SettingsListCallbackData_t;
     OSShim_Mutex* moduleConfigMutex;
     SettingsParser* settingsParser;
     bool persistentStorageEnabled;
     Settings_t* settings;
     OSShim* osShim;
 
+    static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     static bool validatePermissions(SettingPermissions_t permissions);
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
 };
