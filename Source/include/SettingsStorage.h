@@ -333,6 +333,7 @@ private:
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     static bool validatePermissions(SettingPermissions_t permissions);
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
+    static void freeSettingValue(const SettingValue_t* settingValue);
 };
 
 #endif // SETTINGSSTORAGE_SETTINGS_H

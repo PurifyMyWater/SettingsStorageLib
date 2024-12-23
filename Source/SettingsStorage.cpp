@@ -372,3 +372,12 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key
 
     return NO_ERROR;
 }
+
+void SettingsStorage::freeSettingValue(const SettingValue_t* settingValue)
+{
+    if (settingValue->settingValueType == STRING)
+    {
+        free(settingValue->settingValueData.string);
+    }
+    delete settingValue;
+}
