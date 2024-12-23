@@ -2,6 +2,7 @@
 #define LIBARTCPP_H
 
 #include "art.h"
+#include <cassert>
 
 /**
  * @brief A C++ wrapper for the ART library
@@ -113,8 +114,6 @@ private:
     art_tree tree{};
 };
 
-
-#include <cassert>
 
 template <typename ValueType>
 AdaptiveRadixTree<ValueType>::AdaptiveRadixTree()
