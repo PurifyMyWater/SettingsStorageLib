@@ -2,6 +2,10 @@
 
 name: CI
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 on:
     push:
         branches-ignore:
@@ -22,7 +26,7 @@ jobs:
             -   name: Cache git submodules
                 uses: actions/cache@v4
                 with:
-                    key: "${{ runner.os }}-git-${{ hashFiles('.git/modules/*/HEAD') }}" # Cache will be dismissed if any submodule change
+                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
                     path: ".git"
                     restore-keys: "${{ runner.os }}-git-"
 
@@ -32,19 +36,31 @@ jobs:
                     submodules: 'recursive'
                     token: ${{ secrets.SubmoduleToken }}
 
+            -   name: Cache Coverage Report
+                uses: actions/cache@v4
+                with:
+                    key: "${{ runner.os }}-coverage-${{ github.sha }}"
+                    path: '${{runner.workspace}}/coverage.xml'
+
             -   name: Configure CMake
-                run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
+                run: mkdir build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_C_FLAGS=--coverage -S . -B ./build
 
             -   name: Build
-                working-directory: ${{runner.workspace}}/build
-                run: cmake --build .
+                run: cmake --build ./build
 
             -   name: Test
-                working-directory: ${{runner.workspace}}/build
-                run: ./Tests/SettingsStorage_GoogleTestsExe
+                run: build/Tests/SettingsStorage_GoogleTestsExe
+
+            -   name: Install Coverage Report tool
+                run: sudo apt-get install -y gcovr
+
+            -   name: Generate Coverage Report
+                run: gcovr --sonarqube -r $GITHUB_WORKSPACE > ${{runner.workspace}}/coverage.xml
+
 
     Linter:
         runs-on: ubuntu-latest
+        needs: Test
 
         defaults:
             run:
@@ -58,7 +74,7 @@ jobs:
             -   name: Cache git submodules
                 uses: actions/cache@v4
                 with:
-                    key: "${{ runner.os }}-git-${{ hashFiles('.git/modules/*/HEAD') }}" # Cache will be dismissed if any submodule change
+                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
                     path: ".git"
                     restore-keys: "${{ runner.os }}-git-"
 
@@ -69,7 +85,7 @@ jobs:
                     token: ${{ secrets.SubmoduleToken }}
 
             -   name: Configure CMake
-                run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build
+                run: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_C_FLAGS=--coverage -S $GITHUB_WORKSPACE -B ./build
 
             -   name: Linter
                 uses: cpp-linter/cpp-linter-action@v2
@@ -81,7 +97,7 @@ jobs:
                     ignore: 'Source/deps/'
                     style: 'file'  # Use .clang-format config file
                     tidy-checks: '' # Use .clang-tidy config file
-                    database: '${{runner.workspace}}/build'
+                    database: '$GITHUB_WORKSPACE/build'
                     step-summary: true
                     tidy-review: true
                     format-review: true
@@ -97,3 +113,52 @@ jobs:
             -   name: Clang Format Fail Check
                 if: steps.linter.outputs.clang-format-checks-failed > 0
                 run: exit 0 # To enable or disable this check as an error, run exit 1 / exit 0.
+    Sonar:
+        runs-on: ubuntu-latest
+        needs: Test
+        env:
+            BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+        steps:
+            -   name: Cache git submodules
+                uses: actions/cache@v4
+                with:
+                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
+                    path: ".git"
+                    restore-keys: "${{ runner.os }}-git-"
+
+            -   name: "Checkout repository"
+                uses: actions/checkout@v4
+                with:
+                    submodules: 'recursive'
+                    token: ${{ secrets.SubmoduleToken }}
+                    fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis.
+
+            -   name: Install sonar-scanner and build-wrapper
+                uses: sonarsource/sonarcloud-github-c-cpp@v3
+
+            -   name: Run build-wrapper
+                run: |
+                    mkdir build
+                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_C_FLAGS=--coverage -S $GITHUB_WORKSPACE -B ./build
+                    build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build ./build
+
+            -   name: GetCoverageReport
+                uses: actions/cache@v4
+                with:
+                    key: "${{ runner.os }}-coverage-${{ github.sha }}"
+                    path: '${{runner.workspace}}/coverage.xml'
+
+            -   name: Exit if no coverage report found
+                run: |
+                    if [ ! -f ${{runner.workspace}}/coverage.xml ]; then
+                        echo "No coverage report found"
+                        exit 1
+                    fi
+
+            -   name: Run sonar-scanner
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+                run: |
+                    sonar-scanner --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json" \
+                    --define sonar.coverageReportPaths=${{runner.workspace}}/coverage.xml
