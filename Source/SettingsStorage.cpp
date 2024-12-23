@@ -6,15 +6,13 @@
 // This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
 SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs)
 {
-    using SettingPermissionType = std::underlying_type_t<SettingPermissions_t>;
-    return static_cast<SettingPermissions_t>(static_cast<SettingPermissionType>(lhs) | static_cast<SettingPermissionType>(rhs));
+    return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) | static_cast<std::byte>(rhs));
 }
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise AND operator.
 SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rhs)
 {
-    using SettingPermissionType = std::underlying_type_t<SettingPermissions_t>;
-    return static_cast<SettingPermissions_t>(static_cast<SettingPermissionType>(lhs) & static_cast<SettingPermissionType>(rhs));
+    return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) & static_cast<std::byte>(rhs));
 }
 
 // This function returns a formatted string of the permissions described in the parameter permission.
@@ -65,11 +63,11 @@ SettingsStorage::SettingsStorage(const char* pathToSettingsFile, SettingError_t*
         return;
     }
 
+    this->settingsParser = settingsParser;
     if (settingsParser == nullptr)
     {
-        settingsParser = new SettingsParser(pathToSettingsFile);
+        this->settingsParser = new SettingsParser(pathToSettingsFile);
     }
-    this->settingsParser = settingsParser;
 
     SettingsParser::ParserError_t parserError;
     this->settings = this->settingsParser->readSettingsFromPersistentStorage(&parserError); // Always returns a valid pointer, with either the settings or an empty tree.
@@ -117,11 +115,11 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
 
 int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
 {
-    SettingsListCallbackData_t* callbackData = static_cast<SettingsListCallbackData_t*>(data);
+    auto* callbackData = static_cast<SettingsListCallbackData_t*>(data);
     SettingPermissions_t permissions = std::get<0>(*callbackData);
     SettingPermissionsFilterMode_t filterMode = std::get<1>(*callbackData);
     SettingsKeysList_t* outputKeys = std::get<2>(*callbackData);
-    SettingValue_t* settingValue = static_cast<SettingValue_t*>(value);
+    auto const* settingValue = static_cast<SettingValue_t* const>(value);
 
     switch (filterMode)
     {
@@ -129,7 +127,7 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
         {
             if (static_cast<uint32_t>(settingValue->settingPermissions & permissions) > 0) // If a bit is set in both, the result is greater than 0.
             {
-                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key), key_len);
             }
             return NO_ERROR;
         }
@@ -138,7 +136,7 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
         {
             if (settingValue->settingPermissions == permissions)
             {
-                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key), key_len);
             }
             return NO_ERROR;
         }
@@ -147,7 +145,7 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
         {
             if (settingValue->settingPermissions != permissions)
             {
-                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key), key_len);
             }
             return NO_ERROR;
         }
@@ -156,7 +154,7 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
         {
             if (static_cast<uint32_t>(settingValue->settingPermissions & permissions) == 0)
             {
-                outputKeys->emplace_back(reinterpret_cast<const char*>(key));
+                outputKeys->emplace_back(reinterpret_cast<const char*>(key), key_len);
             }
             return NO_ERROR;
         }
@@ -186,8 +184,7 @@ SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char* ke
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions) const
 {
     SettingValue_t* value;
-    SettingError_t result = getSettingValue(key, value);
-    if (result != NO_ERROR)
+    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
     {
         return result;
     }
@@ -209,8 +206,7 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* ke
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions) const
 {
     SettingValue_t* value;
-    SettingError_t result = getSettingValue(key, value);
-    if (result != NO_ERROR)
+    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
     {
         return result;
     }
@@ -237,8 +233,7 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* 
     }
 
     SettingValue_t* value;
-    SettingError_t result = getSettingValue(key, value);
-    if (result != NO_ERROR)
+    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
     {
         return result;
     }
@@ -270,7 +265,7 @@ SettingsStorage::SettingError_t SettingsStorage::addSettingKey(const char* key, 
         return INVALID_INPUT_ERROR;
     }
 
-    SettingValue_t* newValue = new SettingValue_t();
+    auto* newValue = new SettingValue_t();
     newValue->settingPermissions = permissions;
     newValue->settingValueType = VOID;
     newValue->settingValueData = {0};
@@ -290,9 +285,8 @@ SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsString(const c
     }
 
     SettingValue_t* outputValue;
-    SettingError_t result = getSettingValue(key, outputValue);
 
-    if (result != NO_ERROR)
+    if (SettingError_t result = getSettingValue(key, outputValue); result != NO_ERROR)
     {
         return result;
     }
@@ -318,9 +312,8 @@ SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsString(const c
 SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsInt(const char* key, const int64_t value) const
 {
     SettingValue_t* outputValue;
-    SettingError_t result = getSettingValue(key, outputValue);
 
-    if (result != NO_ERROR)
+    if (SettingError_t result = getSettingValue(key, outputValue); result != NO_ERROR)
     {
         return result;
     }
@@ -342,9 +335,8 @@ SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsInt(const char
 SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsReal(const char* key, const double value) const
 {
     SettingValue_t* outputValue;
-    SettingError_t result = getSettingValue(key, outputValue);
 
-    if (result != NO_ERROR)
+    if (SettingError_t result = getSettingValue(key, outputValue); result != NO_ERROR)
     {
         return result;
     }
