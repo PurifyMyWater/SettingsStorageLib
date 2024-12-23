@@ -85,7 +85,8 @@ jobs:
                     token: ${{ secrets.SubmoduleToken }}
 
             -   name: Configure CMake
-                run: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_C_FLAGS=--coverage -S $GITHUB_WORKSPACE -B ./build
+                working-directory: ${{ runner.workspace }}
+                run: mkdir build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_C_FLAGS=--coverage -S $GITHUB_WORKSPACE -B ./build
 
             -   name: Linter
                 uses: cpp-linter/cpp-linter-action@v2
@@ -97,7 +98,7 @@ jobs:
                     ignore: 'Source/deps/'
                     style: 'file'  # Use .clang-format config file
                     tidy-checks: '' # Use .clang-tidy config file
-                    database: '$GITHUB_WORKSPACE/build'
+                    database: '${{ runner.workspace }}/build'
                     step-summary: true
                     tidy-review: true
                     format-review: true
