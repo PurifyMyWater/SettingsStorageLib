@@ -4,20 +4,25 @@
 #include "gtest/gtest.h"
 
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
-    SettingsStorage::Settings_t(name); \
-    double _real1_default = 1.23; \
-    SettingsStorage::SettingValue_t _valueSetting1 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::REAL, .settingValueData = {.real = 1.23}, .settingDefaultValueData = {.real = _real1_default}, .settingPermissions = SettingPermissions_t::USER};                                      \
+    SettingsStorage::Settings_t(name);                                                                                                                                                                 \
+    double _real1_default = 1.23;                                                                                                                                                                      \
+    SettingsStorage::SettingValue_t _valueSetting1 = {.settingValueType = SettingsStorage::SettingValueType_t::REAL,                                                                                   \
+                                                      .settingValueData = {.real = 1.23},                                                                                                              \
+                                                      .settingDefaultValueData = {.real = _real1_default},                                                                                             \
+                                                      .settingPermissions = SettingPermissions_t::USER};                                                                                               \
     (name).insert("menu1/setting1", static_cast<int>(strlen("menu1/setting1")), &_valueSetting1);                                                                                                      \
-    int64_t _int2_default = 45; \
-    SettingsStorage::SettingValue_t _valueSetting2 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::INTEGER, .settingValueData = {.integer = 45}, .settingDefaultValueData = {.integer = _int2_default}, .settingPermissions = SettingPermissions_t::USER};                                  \
+    int64_t _int2_default = 45;                                                                                                                                                                        \
+    SettingsStorage::SettingValue_t _valueSetting2 = {.settingValueType = SettingsStorage::SettingValueType_t::INTEGER,                                                                                \
+                                                      .settingValueData = {.integer = 45},                                                                                                             \
+                                                      .settingDefaultValueData = {.integer = _int2_default},                                                                                           \
+                                                      .settingPermissions = SettingPermissions_t::USER};                                                                                               \
     (name).insert("menu1/setting2", static_cast<int>(strlen("menu1/setting2")), &_valueSetting2);                                                                                                      \
     char* _string3 = strdup("string3");                                                                                                                                                                \
-    char* _string3_default = strdup("string3");                                                                                                                                                                \
-    SettingsStorage::SettingValue_t _valueSetting3 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::STRING, .settingValueData = {.string = _string3}, \
-            .settingDefaultValueData = {.string = _string3_default}, .settingPermissions = SettingPermissions_t::USER};                              \
+    char* _string3_default = strdup("string3");                                                                                                                                                        \
+    SettingsStorage::SettingValue_t _valueSetting3 = {.settingValueType = SettingsStorage::SettingValueType_t::STRING,                                                                                 \
+                                                      .settingValueData = {.string = _string3},                                                                                                        \
+                                                      .settingDefaultValueData = {.string = _string3_default},                                                                                         \
+                                                      .settingPermissions = SettingPermissions_t::USER};                                                                                               \
     (name).insert("menu2/setting3", static_cast<int>(strlen("menu2/setting3")), &_valueSetting3)
 
 #define NEW_POPULATED_SETTINGS_STORAGE                                                                                                                                                                 \
@@ -1376,4 +1381,271 @@ TEST(SettingsStorage, listSettingsKeysEmptyPrefix)
     ++it;
 
     ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsValidAllFilterByKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::NO_ERROR;
+    double expectedReal = 12.91;
+    int64_t expectedInt = 12;
+    const char* expectedString = "12,91";
+
+    result = settingsStorage.putSettingValueAsReal("menu1/setting1", expectedReal);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting2", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsString("menu2/setting3", expectedString);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.restoreDefaultSettings("", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+
+    constexpr size_t outStringSize = 32;
+    double outputValueReal;
+    int64_t outputValueInt;
+    char outputValueString[outStringSize];
+    SettingPermissions_t outputPermissions;
+
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValueReal, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_real1_default, outputValueReal);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_int2_default, outputValueInt);
+
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueString, outStringSize, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_STREQ(_string3_default, outputValueString);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsValidSomeFilterByKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::NO_ERROR;
+    double expectedReal = 12.91;
+    int64_t expectedInt = 12;
+    const char* expectedString = "12,91";
+
+    result = settingsStorage.putSettingValueAsReal("menu1/setting1", expectedReal);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting2", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsString("menu2/setting3", expectedString);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.restoreDefaultSettings("menu1", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+
+    constexpr size_t outStringSize = 32;
+    double outputValueReal;
+    int64_t outputValueInt;
+    char outputValueString[outStringSize];
+    SettingPermissions_t outputPermissions;
+
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValueReal, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_real1_default, outputValueReal);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_int2_default, outputValueInt);
+
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueString, outStringSize, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_STREQ(expectedString, outputValueString);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsValidNoneFilterByKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::NO_ERROR;
+    double expectedReal = 12.91;
+    int64_t expectedInt = 12;
+    const char* expectedString = "12,91";
+
+    result = settingsStorage.putSettingValueAsReal("menu1/setting1", expectedReal);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting2", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsString("menu2/setting3", expectedString);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.restoreDefaultSettings("menu7", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+
+    constexpr size_t outStringSize = 32;
+    double outputValueReal;
+    int64_t outputValueInt;
+    char outputValueString[outStringSize];
+    SettingPermissions_t outputPermissions;
+
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValueReal, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedReal, outputValueReal);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedInt, outputValueInt);
+
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueString, outStringSize, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_STREQ(expectedString, outputValueString);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsValidAllFilterByPermissions)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::NO_ERROR;
+    double expectedReal = 12.91;
+    int64_t expectedInt = 12;
+    const char* expectedString = "12,91";
+
+    result = settingsStorage.putSettingValueAsReal("menu1/setting1", expectedReal);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting2", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsString("menu2/setting3", expectedString);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.restoreDefaultSettings("", SettingPermissions_t::SYSTEM, ExcludeSettingsWithAllPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+
+    constexpr size_t outStringSize = 32;
+    double outputValueReal;
+    int64_t outputValueInt;
+    char outputValueString[outStringSize];
+    SettingPermissions_t outputPermissions;
+
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValueReal, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_real1_default, outputValueReal);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_int2_default, outputValueInt);
+
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueString, outStringSize, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_STREQ(_string3_default, outputValueString);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsValidSomeFilterByPermissions)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::NO_ERROR;
+    double expectedReal = 12.91;
+    int64_t expectedInt = 12;
+    const char* expectedString = "12,91";
+
+    result = settingsStorage.addSettingAsInt("menu1/setting3", SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM, _int2_default);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.putSettingValueAsReal("menu1/setting1", expectedReal);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting2", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting3", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsString("menu2/setting3", expectedString);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.restoreDefaultSettings("", SettingPermissions_t::USER, ExcludeSettingsWithAnyPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+
+    constexpr size_t outStringSize = 32;
+    double outputValueReal;
+    int64_t outputValueInt;
+    char outputValueString[outStringSize];
+    SettingPermissions_t outputPermissions;
+
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValueReal, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedReal, outputValueReal);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedInt, outputValueInt);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting3", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(_int2_default, outputValueInt);
+
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueString, outStringSize, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_STREQ(expectedString, outputValueString);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsValidNoneFilterByPermissions)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::NO_ERROR;
+    double expectedReal = 12.91;
+    int64_t expectedInt = 12;
+    const char* expectedString = "12,91";
+
+    result = settingsStorage.addSettingAsInt("menu1/setting3", SettingPermissions_t::ADMIN | SettingPermissions_t::USER, _int2_default);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.putSettingValueAsReal("menu1/setting1", expectedReal);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting2", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsInt("menu1/setting3", expectedInt);
+    ASSERT_EQ(expectedResult, result);
+    result = settingsStorage.putSettingValueAsString("menu2/setting3", expectedString);
+    ASSERT_EQ(expectedResult, result);
+
+    result = settingsStorage.restoreDefaultSettings("", ALL_PERMISSIONS, MatchSettingsWithAllPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+
+    constexpr size_t outStringSize = 32;
+    double outputValueReal;
+    int64_t outputValueInt;
+    char outputValueString[outStringSize];
+    SettingPermissions_t outputPermissions;
+
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValueReal, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedReal, outputValueReal);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedInt, outputValueInt);
+
+    result = settingsStorage.getSettingAsInt("menu1/setting3", outputValueInt, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(expectedInt, outputValueInt);
+
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueString, outStringSize, &outputPermissions);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_STREQ(expectedString, outputValueString);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsInvalidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::INVALID_INPUT_ERROR;
+
+    result = settingsStorage.restoreDefaultSettings(nullptr, ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsInvalidPermissions)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::INVALID_INPUT_ERROR;
+
+    result = settingsStorage.restoreDefaultSettings("menu1", static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1), MatchSettingsWithAnyPermissionsListed);
+    EXPECT_EQ(expectedResult, result);
+}
+
+TEST(SettingsStorage, restoreDefaultSettingsInvalidFilterMode)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+    SettingsStorage::SettingError_t expectedResult = SettingsStorage::INVALID_INPUT_ERROR;
+
+    result = settingsStorage.restoreDefaultSettings("menu1", ALL_PERMISSIONS, static_cast<SettingPermissionsFilterMode_t>(-1));
+    EXPECT_EQ(expectedResult, result);
 }

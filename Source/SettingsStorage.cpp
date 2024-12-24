@@ -103,7 +103,35 @@ bool SettingsStorage::disablePersistentStorage()
     return res;
 }
 
-SettingsStorage::SettingError_t SettingsStorage::restoreDefaultSettings(const char* keyPrefix) { return NO_ERROR; } // TODO Implement this function
+SettingsStorage::SettingError_t SettingsStorage::restoreDefaultSettings(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode) const
+{
+    if (keyPrefix == nullptr)
+    {
+        return INVALID_INPUT_ERROR;
+    }
+
+    SettingsKeysList_t outputKeys;
+
+    SettingError_t result = listSettingsKeys(keyPrefix, permissions, filterMode, outputKeys);
+    if (result != NO_ERROR)
+    {
+        return result;
+    }
+
+    for (const auto& key: outputKeys)
+    {
+        SettingValue_t* outputValue;
+        result = getSettingValue(key.c_str(), outputValue);
+        if (result != NO_ERROR)
+        {
+            return result;
+        }
+
+        outputValue->settingValueData = outputValue->settingDefaultValueData;
+    }
+
+    return NO_ERROR;
+}
 
 SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorage() {}
 SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() {}

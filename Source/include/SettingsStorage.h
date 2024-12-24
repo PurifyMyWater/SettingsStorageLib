@@ -142,23 +142,27 @@ public:
      * @brief Restores the default settings of the settings that match the provided keyPrefix, or all settings if componentName is "".
      *
      * @param keyPrefix The name of the component to restore settings for.
+     * @param permissions The permissions filter to apply to the settings restore process.
+     * @param filterMode The filter mode to apply to the permissions.
      * @return SettingError_t The result of the restore operation.
      * @retval NO_ERROR The settings were successfully restored.
-     * @retval INVALID_INPUT_ERROR If componentName is nullptr.
-     * @retval KEY_NOT_FOUND_ERROR If componentName is not previously registered using registerComponent().
+     * @retval INVALID_INPUT_ERROR If keyPrefix is nullptr.
+     * @retval INVALID_INPUT_ERROR The permissions are invalid.
+     * @retval INVALID_INPUT_ERROR The filterMode is invalid.
      */
-    [[nodiscard]] SettingError_t restoreDefaultSettings(const char* keyPrefix);
+    [[nodiscard]] SettingError_t restoreDefaultSettings(const char* keyPrefix, SettingPermissions_t permissions = ALL_PERMISSIONS,
+                                                        SettingPermissionsFilterMode_t filterMode = MatchSettingsWithAnyPermissionsListed) const;
 
     /**
-     * @brief This function saves the settings to the persistent storage, replacing the old copy ot them.
+     * @brief This function saves the settings to the persistent storage, replacing the old copy of them.
      *
      * If delayed write is enabled, it will also cancel the timer if it is active.
      * If the persisten storage is disabled, it will do nothing and return SETTINGS_FILESYSTEM_ERROR.
      *
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The settings were successfully saved.
-     * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted and the settings were not saved.
-     * @retval SETTINGS_FILESYSTEM_ERROR The persisten storage is disabled and the settings were not saved.
+     * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted, and the settings were not saved.
+     * @retval SETTINGS_FILESYSTEM_ERROR The persisten storage is disabled, and the settings were not saved.
      */
     [[nodiscard]] SettingError_t storeSettingsInPersistentStorage();
 
