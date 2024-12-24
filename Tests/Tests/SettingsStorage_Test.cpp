@@ -887,7 +887,7 @@ TEST(SettingsStorage, AddSettingKeyAsStringValid)
     EXPECT_EQ(expectedPermissions, outputPermissions);
     EXPECT_STREQ(expectedValue, outputValue);
 
-    expectedValue="new string 2";
+    expectedValue = "new string 2";
 
     result = settingsStorage.putSettingValueAsString(key, expectedValue); // Add a value to the key to see if the value is updated.
     EXPECT_EQ(SettingsStorage::NO_ERROR, result);
