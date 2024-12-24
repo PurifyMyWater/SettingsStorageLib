@@ -1208,3 +1208,34 @@ TEST(SettingsStorage, listSettingsKeysInvalidFilterMode)
     // Then
     EXPECT_EQ(expected_result, result);
 }
+
+
+TEST(SettingsStorage, listSettingsKeysEmptyPrefix)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    result = settingsStorage.listSettingsKeys("", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
