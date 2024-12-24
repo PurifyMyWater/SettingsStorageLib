@@ -54,6 +54,9 @@ constexpr SettingPermissions_t NO_PERMISSIONS = static_cast<SettingPermissions_t
 /// This function returns a formatted string of the permissions described in the parameter permission
 const char* settingPermissionToString(SettingPermissions_t permission, char* permissionString, size_t permissionStringSize);
 
+/// This function validates the permissions.
+bool validatePermissions(SettingPermissions_t permissions);
+
 class SettingsStorage
 {
 public:
@@ -328,7 +331,6 @@ private:
     OSShim* osShim;
 
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
-    static bool validatePermissions(SettingPermissions_t permissions);
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
     static void freeSettingValue(const SettingValue_t* settingValue);
 };

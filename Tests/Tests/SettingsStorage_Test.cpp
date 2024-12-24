@@ -54,6 +54,106 @@ TEST(SettingPermissions, OperatorAnd)
     EXPECT_EQ(expected_result, permission1 & permission2);
 }
 
+TEST(SettingPermissions, ToString_InvalidBuffer)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = nullptr;
+
+    const char* result = settingPermissionToString(SettingPermissions_t::SYSTEM, nullptr, PERMISSION_STRING_SIZE);
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ("", buffer);
+}
+
+TEST(SettingPermissions, ToString_InvalidSize)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = nullptr;
+
+    const char* result = settingPermissionToString(SettingPermissions_t::SYSTEM, buffer, PERMISSION_STRING_SIZE - 1);
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ("", buffer);
+}
+
+TEST(SettingPermissions, ToString_InvalidBufferAndSize)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = nullptr;
+
+    const char* result = settingPermissionToString(SettingPermissions_t::SYSTEM, nullptr, PERMISSION_STRING_SIZE - 1);
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ("", buffer);
+}
+
+TEST(SettingPermissions, ToString_InvalidPermission)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = nullptr;
+
+    const char* result = settingPermissionToString(static_cast<SettingPermissions_t>(1 + static_cast<uint8_t>(ALL_PERMISSIONS)), buffer, PERMISSION_STRING_SIZE);
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ("", buffer);
+}
+
+TEST(SettingPermissions, ToString_System)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "SYSTEM |       |     ";
+    const char* result = settingPermissionToString(SettingPermissions_t::SYSTEM, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ToString_Admin)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "       | ADMIN |     ";
+    const char* result = settingPermissionToString(SettingPermissions_t::ADMIN, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ToString_User)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "       |       | USER";
+    const char* result = settingPermissionToString(SettingPermissions_t::USER, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ToString_All)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "SYSTEM | ADMIN | USER";
+    const char* result = settingPermissionToString(ALL_PERMISSIONS, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ToString_None)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "       |       |     ";
+    const char* result = settingPermissionToString(NO_PERMISSIONS, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ValidatePermissions)
+{
+    EXPECT_TRUE(validatePermissions(SettingPermissions_t::SYSTEM));
+    EXPECT_TRUE(validatePermissions(SettingPermissions_t::ADMIN));
+    EXPECT_TRUE(validatePermissions(SettingPermissions_t::USER));
+    EXPECT_TRUE(validatePermissions(ALL_PERMISSIONS));
+    EXPECT_TRUE(validatePermissions(NO_PERMISSIONS));
+    EXPECT_FALSE(validatePermissions(static_cast<SettingPermissions_t>(1 + static_cast<uint8_t>(ALL_PERMISSIONS))));
+}
+
 TEST(SettingsStorage, Constructor)
 {
     NEW_POPULATED_SETTINGS_T(settings);

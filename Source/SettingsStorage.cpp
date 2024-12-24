@@ -12,11 +12,11 @@ SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rh
 // This function returns a formatted string of the permissions described in the parameter permission.
 const char* settingPermissionToString(const SettingPermissions_t permission, char* permissionString, const size_t permissionStringSize)
 {
-    if (permissionString == nullptr || permissionStringSize < PERMISSION_STRING_SIZE)
+    if (permissionString == nullptr || permissionStringSize < PERMISSION_STRING_SIZE || !validatePermissions(permission))
     {
         return nullptr;
     }
-    if (permission == SettingPermissions_t::SYSTEM)
+    if (static_cast<bool>(permission & SettingPermissions_t::SYSTEM))
     {
         strcpy(permissionString, "SYSTEM | ");
     }
@@ -24,7 +24,7 @@ const char* settingPermissionToString(const SettingPermissions_t permission, cha
     {
         strcpy(permissionString, "       | ");
     }
-    if (permission == SettingPermissions_t::ADMIN)
+    if (static_cast<bool>(permission & SettingPermissions_t::ADMIN))
     {
         strcat(permissionString, "ADMIN | ");
     }
@@ -32,9 +32,13 @@ const char* settingPermissionToString(const SettingPermissions_t permission, cha
     {
         strcat(permissionString, "      | ");
     }
-    if (permission == SettingPermissions_t::USER)
+    if (static_cast<bool>(permission & SettingPermissions_t::USER))
     {
         strcat(permissionString, "USER");
+    }
+    else
+    {
+        strcat(permissionString, "    ");
     }
     return permissionString;
 }
@@ -407,7 +411,7 @@ SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsString(const c
     return NO_ERROR;
 }
 
-bool SettingsStorage::validatePermissions(const SettingPermissions_t permissions) { return permissions <= ALL_PERMISSIONS; }
+bool validatePermissions(const SettingPermissions_t permissions) { return permissions <= ALL_PERMISSIONS; }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key, SettingValue_t*& outputValue) const
 {
