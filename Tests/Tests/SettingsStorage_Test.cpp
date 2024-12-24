@@ -36,6 +36,24 @@
 
 static LinuxOSShim linuxOSShim;
 
+TEST(SettingPermissions, OperatorOr)
+{
+    SettingPermissions_t permission1 = SettingPermissions_t::SYSTEM;
+    SettingPermissions_t permission2 = SettingPermissions_t::ADMIN;
+    SettingPermissions_t expected_result = static_cast<SettingPermissions_t>(static_cast<uint8_t>(permission1) | static_cast<uint8_t>(permission2));
+
+    EXPECT_EQ(expected_result, permission1 | permission2);
+}
+
+TEST(SettingPermissions, OperatorAnd)
+{
+    SettingPermissions_t permission1 = SettingPermissions_t::SYSTEM;
+    SettingPermissions_t permission2 = SettingPermissions_t::ADMIN;
+    SettingPermissions_t expected_result = static_cast<SettingPermissions_t>(static_cast<uint8_t>(permission1) & static_cast<uint8_t>(permission2));
+
+    EXPECT_EQ(expected_result, permission1 & permission2);
+}
+
 TEST(SettingsStorage, Constructor)
 {
     NEW_POPULATED_SETTINGS_T(settings);
@@ -153,6 +171,23 @@ TEST(SettingsStorage, GetSettingAsRealValid)
     EXPECT_EQ(expectedValue, outputValue);
 }
 
+TEST(SettingsStorage, GetSettingAsRealValidShort)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    double expectedValue = _valueSetting1.settingValueData.real;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getSettingAsReal("menu1/setting1", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
 TEST(SettingsStorage, GetSettingAsRealInvalidKey)
 {
     NEW_POPULATED_SETTINGS_STORAGE;
@@ -229,6 +264,23 @@ TEST(SettingsStorage, GetSettingAsIntValid)
     // Then
     EXPECT_EQ(expected_result, result);
     EXPECT_EQ(expectedPermissions, outputPermissions);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
+TEST(SettingsStorage, GetSettingAsIntValidShort)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    int64_t expectedValue = _valueSetting2.settingValueData.integer;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getSettingAsInt("menu1/setting2", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
     EXPECT_EQ(expectedValue, outputValue);
 }
 
@@ -309,6 +361,24 @@ TEST(SettingsStorage, GetSettingAsStringValid)
     // Then
     EXPECT_EQ(expected_result, result);
     EXPECT_EQ(expectedPermissions, outputPermissions);
+    EXPECT_STREQ(expectedValue, outputValueBuffer);
+}
+
+TEST(SettingsStorage, GetSettingAsStringValidShort)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    const char* expectedValue = _valueSetting3.settingValueData.string;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getSettingAsString("menu2/setting3", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
     EXPECT_STREQ(expectedValue, outputValueBuffer);
 }
 
@@ -918,6 +988,21 @@ TEST(SettingsStorage, AddSettingKeyAsStringInvalidKey)
 
     // When
     result = settingsStorage.addSettingAsString(nullptr, permissions, expectedValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, AddSettingKeyAsStringInvalidDefaultValue)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+    SettingPermissions_t permissions = SettingPermissions_t::USER;
+
+    // When
+    result = settingsStorage.addSettingAsString("menu1/setting3", permissions, nullptr);
 
     // Then
     EXPECT_EQ(expected_result, result);
