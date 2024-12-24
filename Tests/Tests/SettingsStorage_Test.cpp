@@ -6,14 +6,16 @@
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
     SettingsStorage::Settings_t(name);                                                                                                                                                                 \
     SettingsStorage::SettingValue_t _valueSetting1 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::REAL, .settingValueData = {.real = 1.23}, .settingPermissions = SettingPermissions_t::USER};                                      \
+            .settingValueType = SettingsStorage::SettingValueType_t::REAL, .settingValueData = {.real = 1.23}, .settingDefaultValueData = {.real = 1.23}, .settingPermissions = SettingPermissions_t::USER};                                      \
     (name).insert("menu1/setting1", static_cast<int>(strlen("menu1/setting1")), &_valueSetting1);                                                                                                      \
     SettingsStorage::SettingValue_t _valueSetting2 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::INTEGER, .settingValueData = {.integer = 45}, .settingPermissions = SettingPermissions_t::USER};                                  \
+            .settingValueType = SettingsStorage::SettingValueType_t::INTEGER, .settingValueData = {.integer = 45}, .settingDefaultValueData = {.integer = 45}, .settingPermissions = SettingPermissions_t::USER};                                  \
     (name).insert("menu1/setting2", static_cast<int>(strlen("menu1/setting2")), &_valueSetting2);                                                                                                      \
     char* _string3 = strdup("string3");                                                                                                                                                                \
+    char* _string3_default = strdup("string3");                                                                                                                                                                \
     SettingsStorage::SettingValue_t _valueSetting3 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::STRING, .settingValueData = {.string = _string3}, .settingPermissions = SettingPermissions_t::USER};                              \
+            .settingValueType = SettingsStorage::SettingValueType_t::STRING, .settingValueData = {.string = _string3}, \
+            .settingDefaultValueData = {.string = _string3_default}, .settingPermissions = SettingPermissions_t::USER};                              \
     (name).insert("menu2/setting3", static_cast<int>(strlen("menu2/setting3")), &_valueSetting3)
 
 #define NEW_POPULATED_SETTINGS_STORAGE                                                                                                                                                                 \
