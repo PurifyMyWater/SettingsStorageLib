@@ -5,7 +5,6 @@
 #include "OSShim.h"
 #include "libartcpp.h"
 #include "list"
-#include "set"
 
 constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
@@ -75,7 +74,6 @@ public:
     /// Enum with the types of data that can be saved.
     typedef enum
     {
-        VOID = 0,
         REAL,
         INTEGER,
         STRING
@@ -94,29 +92,12 @@ public:
     {
         SettingValueType_t settingValueType;
         SettingValueData_t settingValueData;
+        SettingValueData_t settingDefaultValueData;
         SettingPermissions_t settingPermissions;
     } SettingValue_t;
 
     /// String with the name of the component.
     constexpr static const char* const COMPONENT_TAG = "PurifyMyWater - SettingsStorage";
-
-    /// The representation of an empty element.
-    static constexpr SettingValue_t VOID_VALUE = {.settingValueType = VOID, .settingValueData = {0}, .settingPermissions = SettingPermissions_t::SYSTEM};
-
-    /**
-     * The function data type that the settings restore functionality uses.
-     * All modules that use settings must register a function of this type where they restore the default settings for the module using addSettingKey(...) and putSettingValue(...).
-     * It is guaranteed that the structure of the settings map paths used in the restore process do not exist before the call to this function.
-     */
-    typedef void (*RestoreComponentDefaultSettingsCallback_t)();
-
-    /// The value of each component element stored in the component map. It is used to provide the information of the component in the settings restore process.
-    typedef struct ComponentInfo_t
-    {
-        std::string componentName;
-        std::set<std::string> componentTopLevelPathsList;
-        RestoreComponentDefaultSettingsCallback_t restoreComponentDefaultSettingsCallback;
-    } ComponentInfo_t;
 
     /// The data structure used internally to store the settings.
     typedef AdaptiveRadixTree<SettingValue_t> Settings_t;
@@ -158,35 +139,15 @@ public:
     [[nodiscard]] bool disablePersistentStorage();
 
     /**
-     * @brief Registers a component with the provided component information.
+     * @brief Restores the default settings of the settings that match the provided keyPrefix, or all settings if componentName is "".
      *
-     * @param componentInfo The information of the component to register.
-     * @return SettingError_t The result of the registration operation.
-     * @retval NO_ERROR The component was successfully registered.
-     * @retval INVALID_INPUT_ERROR If componentName is nullptr or "".
-     * @retval COMPONENT_ALREADY_REGISTERED_ERROR If componentName is already registered.
-     * @retval INVALID_INPUT_ERROR If componentInfo contains invalid information (an empty componentTopLevelPathsList or a null restoreComponentDefaultSettingsCallback).
-     */
-    [[nodiscard]] SettingError_t registerComponent(ComponentInfo_t& componentInfo);
-
-    /**
-     * @brief Get a set of all the components registered in the settings storage component.
-     * @return A set of all the components registered in the settings storage component.
-     */
-    [[nodiscard]] std::set<ComponentInfo_t> listRegisteredComponents();
-
-    /**
-     * @brief Restores the default settings of the provided component, or all settings if componentName is "".
-     *
-     * @param componentName The name of the component to restore settings for.
+     * @param keyPrefix The name of the component to restore settings for.
      * @return SettingError_t The result of the restore operation.
      * @retval NO_ERROR The settings were successfully restored.
      * @retval INVALID_INPUT_ERROR If componentName is nullptr.
      * @retval KEY_NOT_FOUND_ERROR If componentName is not previously registered using registerComponent().
-     *
-     * @note This function will call the restoreComponentDefaultSettingsCallback of the component to restore the default settings.
      */
-    [[nodiscard]] SettingError_t restoreComponentDefaultSettings(const char* componentName);
+    [[nodiscard]] SettingError_t restoreDefaultSettings(const char* keyPrefix);
 
     /**
      * @brief This function saves the settings to the persistent storage, replacing the old copy ot them.
@@ -234,7 +195,7 @@ public:
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      */
-    [[nodiscard]] SettingError_t getSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
+    [[nodiscard]] SettingError_t getSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
      * @brief This function returns the value of the setting with the provided key.
@@ -247,7 +208,7 @@ public:
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
      */
-    [[nodiscard]] SettingError_t getSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
+    [[nodiscard]] SettingError_t getSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
      * @brief This function returns the value of the setting with the provided key.
@@ -269,6 +230,7 @@ public:
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
      * @param key The key of the setting to create.
      * @param permissions The set of permissions associated with the setting.
+     * @param defaultValue The default value of the setting.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully created.
      * @retval KEY_EXISTS_ERROR The setting with the provided key already exists.
@@ -277,22 +239,38 @@ public:
      *
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
-    [[nodiscard]] SettingError_t addSettingKey(const char* key, SettingPermissions_t permissions) const;
+    [[nodiscard]] SettingError_t addSettingAsInt(const char* key, SettingPermissions_t permissions, int64_t defaultValue) const;
 
     /**
-     * @brief This function updates the value of the setting with the provided key.
-     * @param key The key of the setting to update.
-     * @param value The new value of the setting.
+     * @brief This function creates an empty setting located at the specified path, with the provided permissions.
+     * @param key The key of the setting to create.
+     * @param permissions The set of permissions associated with the setting.
+     * @param defaultValue The default value of the setting.
      * @return SettingError_t The result of the operation.
-     * @retval NO_ERROR The setting was successfully updated.
-     * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
-     * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type or void.
+     * @retval NO_ERROR The setting was successfully created.
+     * @retval KEY_EXISTS_ERROR The setting with the provided key already exists.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
-     * @retval INVALID_INPUT_ERROR The value is nullptr.
+     * @retval INVALID_INPUT_ERROR The permissions are invalid.
      *
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
-    [[nodiscard]] SettingError_t putSettingValueAsString(const char* key, const char* value) const;
+    [[nodiscard]] SettingError_t addSettingAsReal(const char* key, SettingPermissions_t permissions, double defaultValue) const;
+
+    /**
+     * @brief This function creates an empty setting located at the specified path, with the provided permissions.
+     * @param key The key of the setting to create.
+     * @param permissions The set of permissions associated with the setting.
+     * @param defaultValue The default value of the setting. It will be copied to SettingsStorage memory.
+     * @return SettingError_t The result of the operation.
+     * @retval NO_ERROR The setting was successfully created.
+     * @retval KEY_EXISTS_ERROR The setting with the provided key already exists.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
+     * @retval INVALID_INPUT_ERROR The permissions are invalid.
+     * @retval INVALID_INPUT_ERROR The defaultValue is nullptr.
+     *
+     * @note If delayed write is enabled, it will also start or reset the write timer.
+     */
+    [[nodiscard]] SettingError_t addSettingAsString(const char* key, SettingPermissions_t permissions, const char* defaultValue) const;
 
     /**
      * @brief This function updates the value of the setting with the provided key.
@@ -321,6 +299,21 @@ public:
      * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t putSettingValueAsReal(const char* key, double value) const;
+
+    /**
+     * @brief This function updates the value of the setting with the provided key.
+     * @param key The key of the setting to update.
+     * @param value The new value of the setting.
+     * @return SettingError_t The result of the operation.
+     * @retval NO_ERROR The setting was successfully updated.
+     * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
+     * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type or void.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
+     * @retval INVALID_INPUT_ERROR The value is nullptr.
+     *
+     * @note If delayed write is enabled, it will also start or reset the write timer.
+     */
+    [[nodiscard]] SettingError_t putSettingValueAsString(const char* key, const char* value) const;
 
 private:
     typedef std::tuple<SettingPermissions_t, SettingPermissionsFilterMode_t, SettingsKeysList_t*> SettingsListCallbackData_t;
