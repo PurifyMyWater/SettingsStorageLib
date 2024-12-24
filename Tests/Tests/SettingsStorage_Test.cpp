@@ -4,12 +4,14 @@
 #include "gtest/gtest.h"
 
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
-    SettingsStorage::Settings_t(name);                                                                                                                                                                 \
+    SettingsStorage::Settings_t(name); \
+    double _real1_default = 1.23; \
     SettingsStorage::SettingValue_t _valueSetting1 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::REAL, .settingValueData = {.real = 1.23}, .settingDefaultValueData = {.real = 1.23}, .settingPermissions = SettingPermissions_t::USER};                                      \
+            .settingValueType = SettingsStorage::SettingValueType_t::REAL, .settingValueData = {.real = 1.23}, .settingDefaultValueData = {.real = _real1_default}, .settingPermissions = SettingPermissions_t::USER};                                      \
     (name).insert("menu1/setting1", static_cast<int>(strlen("menu1/setting1")), &_valueSetting1);                                                                                                      \
+    int64_t _int2_default = 45; \
     SettingsStorage::SettingValue_t _valueSetting2 = {                                                                                                                                                 \
-            .settingValueType = SettingsStorage::SettingValueType_t::INTEGER, .settingValueData = {.integer = 45}, .settingDefaultValueData = {.integer = 45}, .settingPermissions = SettingPermissions_t::USER};                                  \
+            .settingValueType = SettingsStorage::SettingValueType_t::INTEGER, .settingValueData = {.integer = 45}, .settingDefaultValueData = {.integer = _int2_default}, .settingPermissions = SettingPermissions_t::USER};                                  \
     (name).insert("menu1/setting2", static_cast<int>(strlen("menu1/setting2")), &_valueSetting2);                                                                                                      \
     char* _string3 = strdup("string3");                                                                                                                                                                \
     char* _string3_default = strdup("string3");                                                                                                                                                                \
@@ -462,6 +464,7 @@ TEST(SettingsStorage, PutSettingValueAsIntTypeMismatch)
     SettingPermissions_t expectedPermissions = _valueSetting1.settingPermissions, outputPermissions;
     int64_t value = 12;
     const char* key = "menu1/setting1";
+    double expectedValue = _valueSetting1.settingValueData.real, outputValue;
 
     // When
     result = settingsStorage.putSettingValueAsInt(key, value);
@@ -469,11 +472,10 @@ TEST(SettingsStorage, PutSettingValueAsIntTypeMismatch)
     // Then
     EXPECT_EQ(expected_result, result);
 
-    double outputValue;
     result = settingsStorage.getSettingAsReal(key, outputValue, &outputPermissions);
     EXPECT_EQ(SettingsStorage::NO_ERROR, result);
     EXPECT_EQ(expectedPermissions, outputPermissions);
-    EXPECT_EQ(_valueSetting1.settingValueData.real, outputValue);
+    EXPECT_EQ(expectedValue, outputValue);
 }
 
 TEST(SettingsStorage, PutSettingValueAsRealValid)
@@ -553,6 +555,7 @@ TEST(SettingsStorage, PutSettingValueAsRealTypeMismatch)
     SettingPermissions_t expectedPermissions = _valueSetting2.settingPermissions, outputPermissions;
     double value = 12.34;
     const char* key = "menu1/setting2";
+    int64_t expectedValue = _valueSetting2.settingValueData.integer, outputValue;
 
     // When
     result = settingsStorage.putSettingValueAsReal(key, value);
@@ -560,11 +563,10 @@ TEST(SettingsStorage, PutSettingValueAsRealTypeMismatch)
     // Then
     EXPECT_EQ(expected_result, result);
 
-    int64_t outputValue;
     result = settingsStorage.getSettingAsInt(key, outputValue, &outputPermissions);
     EXPECT_EQ(SettingsStorage::NO_ERROR, result);
     EXPECT_EQ(expectedPermissions, outputPermissions);
-    EXPECT_EQ(_valueSetting2.settingValueData.integer, outputValue);
+    EXPECT_EQ(expectedValue, outputValue);
 }
 
 TEST(SettingsStorage, PutSettingValueAsStringValid)
@@ -660,6 +662,7 @@ TEST(SettingsStorage, PutSettingValueAsStringTypeMismatch)
     SettingPermissions_t expectedPermissions = _valueSetting2.settingPermissions, outputPermissions;
     const char* value = "new string";
     const char* key = "menu1/setting2";
+    int64_t expectedValue = _valueSetting2.settingValueData.integer, outputValue;
 
     // When
     result = settingsStorage.putSettingValueAsString(key, value);
@@ -667,11 +670,10 @@ TEST(SettingsStorage, PutSettingValueAsStringTypeMismatch)
     // Then
     EXPECT_EQ(expected_result, result);
 
-    int64_t outputValue;
     result = settingsStorage.getSettingAsInt(key, outputValue, &outputPermissions);
     EXPECT_EQ(SettingsStorage::NO_ERROR, result);
     EXPECT_EQ(expectedPermissions, outputPermissions);
-    EXPECT_EQ(_valueSetting2.settingValueData.integer, outputValue);
+    EXPECT_EQ(expectedValue, outputValue);
 }
 
 TEST(SettingsStorage, AddSettingKeyAsIntValid)
