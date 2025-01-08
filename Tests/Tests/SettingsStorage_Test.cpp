@@ -246,7 +246,7 @@ TEST(SettingsStorage, DisablePersistentStorage)
     EXPECT_TRUE(settingsStorage.isPersistentStorageEnabled());
 
     // When
-    settingsStorage.disablePersistentStorage();
+    ASSERT_TRUE(settingsStorage.disablePersistentStorage());
 
     // Then
     EXPECT_FALSE(settingsStorage.isPersistentStorageEnabled());
