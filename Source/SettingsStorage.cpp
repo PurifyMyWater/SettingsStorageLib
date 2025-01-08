@@ -210,78 +210,17 @@ SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char* ke
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions) const
 {
-    SettingValue_t* value;
-    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
-    {
-        return result;
-    }
-
-    if (value->settingValueType != INTEGER)
-    {
-        return TYPE_MISMATCH_ERROR;
-    }
-
-    if (outputPermissions != nullptr)
-    {
-        *outputPermissions = value->settingPermissions;
-    }
-    outputValue = value->settingValueData.integer;
-
-    return NO_ERROR;
+    return getSettingValueAsInt(Value, key, outputValue, outputPermissions);
 }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions) const
 {
-    SettingValue_t* value;
-    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
-    {
-        return result;
-    }
-
-    if (value->settingValueType != REAL)
-    {
-        return TYPE_MISMATCH_ERROR;
-    }
-
-    if (outputPermissions != nullptr)
-    {
-        *outputPermissions = value->settingPermissions;
-    }
-    outputValue = value->settingValueData.real;
-
-    return NO_ERROR;
+    return getSettingValueAsReal(Value, key, outputValue, outputPermissions);
 }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* key, char* outputValueBuffer, const size_t outputValueSize, SettingPermissions_t* outputPermissions) const
 {
-    if (outputValueBuffer == nullptr)
-    {
-        return INVALID_INPUT_ERROR;
-    }
-
-    SettingValue_t* value;
-    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
-    {
-        return result;
-    }
-
-    if (value->settingValueType != STRING)
-    {
-        return TYPE_MISMATCH_ERROR;
-    }
-    if (strlen(value->settingValueData.string) >= outputValueSize) // Only allow the string to be copied if it fits in the buffer. (The == is to account for the null terminator)
-    {
-        return INSUFFICIENT_BUFFER_SIZE_ERROR;
-    }
-
-    if (outputPermissions != nullptr)
-    {
-        *outputPermissions = value->settingPermissions;
-    }
-    strcpy(outputValueBuffer, value->settingValueData.string);
-    outputValueBuffer[outputValueSize] = '\0';
-
-    return NO_ERROR;
+    return getSettingValueAsString(Value, key, outputValueBuffer, outputValueSize, outputPermissions);
 }
 
 SettingsStorage::SettingError_t SettingsStorage::addSettingAsInt(const char* key, const SettingPermissions_t permissions, const int64_t defaultValue) const
@@ -411,6 +350,21 @@ SettingsStorage::SettingError_t SettingsStorage::putSettingValueAsString(const c
     return NO_ERROR;
 }
 
+SettingsStorage::SettingError_t SettingsStorage::getDefaultSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions) const
+{
+    return getSettingValueAsInt(DefaultValue, key, outputValue, outputPermissions);
+}
+
+SettingsStorage::SettingError_t SettingsStorage::getDefaultSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions) const
+{
+    return getSettingValueAsReal(DefaultValue, key, outputValue, outputPermissions);
+}
+
+SettingsStorage::SettingError_t SettingsStorage::getDefaultSettingAsString(const char* key, char* outputValueBuffer, size_t outputValueSize, SettingPermissions_t* outputPermissions) const
+{
+    return getSettingValueAsString(DefaultValue, key, outputValueBuffer, outputValueSize, outputPermissions);
+}
+
 bool validatePermissions(const SettingPermissions_t permissions) { return permissions <= ALL_PERMISSIONS; }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key, SettingValue_t*& outputValue) const
@@ -425,6 +379,100 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key
     {
         return KEY_NOT_FOUND_ERROR;
     }
+
+    return NO_ERROR;
+}
+
+SettingsStorage::SettingError_t SettingsStorage::getSettingValueAsInt(TypeofSettingValue type, const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions) const
+{
+    SettingValue_t* value;
+    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
+    {
+        return result;
+    }
+
+    if (value->settingValueType != INTEGER)
+    {
+        return TYPE_MISMATCH_ERROR;
+    }
+
+    if (outputPermissions != nullptr)
+    {
+        *outputPermissions = value->settingPermissions;
+    }
+
+    outputValue = value->settingValueData.integer;
+    if (type == DefaultValue)
+    {
+        outputValue = value->settingDefaultValueData.integer;
+    }
+
+    return NO_ERROR;
+}
+
+SettingsStorage::SettingError_t SettingsStorage::getSettingValueAsReal(TypeofSettingValue type, const char* key, double& outputValue, SettingPermissions_t* outputPermissions) const
+{
+    SettingValue_t* value;
+    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
+    {
+        return result;
+    }
+
+    if (value->settingValueType != REAL)
+    {
+        return TYPE_MISMATCH_ERROR;
+    }
+
+    if (outputPermissions != nullptr)
+    {
+        *outputPermissions = value->settingPermissions;
+    }
+
+    outputValue = value->settingValueData.real;
+    if (type == DefaultValue)
+    {
+        outputValue = value->settingDefaultValueData.real;
+    }
+
+    return NO_ERROR;
+}
+
+SettingsStorage::SettingError_t SettingsStorage::getSettingValueAsString(const TypeofSettingValue type, const char* key, char* outputValueBuffer, const size_t outputValueSize,
+                                                                         SettingPermissions_t* outputPermissions) const
+{
+    if (outputValueBuffer == nullptr)
+    {
+        return INVALID_INPUT_ERROR;
+    }
+
+    SettingValue_t* value;
+    if (SettingError_t result = getSettingValue(key, value); result != NO_ERROR)
+    {
+        return result;
+    }
+
+    if (value->settingValueType != STRING)
+    {
+        return TYPE_MISMATCH_ERROR;
+    }
+
+    const char* outputValue = value->settingValueData.string;
+    if (type == DefaultValue)
+    {
+        outputValue = value->settingDefaultValueData.string;
+    }
+
+    if (strlen(outputValue) >= outputValueSize) // Only allow the string to be copied if it fits in the buffer. (The == is to account for the null terminator)
+    {
+        return INSUFFICIENT_BUFFER_SIZE_ERROR;
+    }
+
+    if (outputPermissions != nullptr)
+    {
+        *outputPermissions = value->settingPermissions;
+    }
+    strcpy(outputValueBuffer, outputValue);
+    outputValueBuffer[outputValueSize] = '\0';
 
     return NO_ERROR;
 }

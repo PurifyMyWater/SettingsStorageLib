@@ -322,8 +322,52 @@ public:
      */
     [[nodiscard]] SettingError_t putSettingValueAsString(const char* key, const char* value) const;
 
+    /**
+     * @brief This function returns the value of the setting with the provided key.
+     * @param key The key of the setting to get.
+     * @param outputValue The value of the setting.
+     * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the permissions are not returned.
+     * @return SettingError_t The result of the operation.
+     * @retval NO_ERROR The setting was successfully retrieved.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
+     * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
+     * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
+     */
+    [[nodiscard]] SettingError_t getDefaultSettingAsInt(const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
+
+    /**
+     * @brief This function returns the value of the setting with the provided key.
+     * @param key The key of the setting to get.
+     * @param outputValue The value of the setting.
+     * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the permissions are not returned.
+     * @return SettingError_t The result of the operation.
+     * @retval NO_ERROR The setting was successfully retrieved.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
+     * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
+     * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
+     */
+    [[nodiscard]] SettingError_t getDefaultSettingAsReal(const char* key, double& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
+
+    /**
+     * @brief This function returns the value of the setting with the provided key.
+     * @param key The key of the setting to get.
+     * @param outputValueBuffer The value of the setting. Must be a buffer with enough space to store the value.
+     * @param outputValueSize The size of the outputValueBuffer.
+     * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the permissions are not returned.
+     * @return SettingError_t The result of the operation.
+     * @retval NO_ERROR The setting was successfully retrieved.
+     * @retval INVALID_INPUT_ERROR The key is nullptr or "".
+     * @retval INVALID_INPUT_ERROR The outputValueBuffer is nullptr.
+     * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
+     * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type.
+     * @retval INSUFFICIENT_BUFFER_SIZE_ERROR The outputValueBuffer is null or not big enough to store the value.
+     */
+    [[nodiscard]] SettingError_t getDefaultSettingAsString(const char* key, char* outputValueBuffer, size_t outputValueSize, SettingPermissions_t* outputPermissions = nullptr) const;
+
 private:
     typedef std::tuple<SettingPermissions_t, SettingPermissionsFilterMode_t, SettingsKeysList_t*> SettingsListCallbackData_t;
+    using TypeofSettingValue = enum { Value, DefaultValue };
+
     OSShim_Mutex* moduleConfigMutex;
     SettingsParser* settingsParser;
     bool persistentStorageEnabled;
@@ -332,6 +376,11 @@ private:
 
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
+    [[nodiscard]] SettingError_t getSettingValueAsInt(TypeofSettingValue type, const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
+    [[nodiscard]] SettingError_t getSettingValueAsReal(TypeofSettingValue type, const char* key, double& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
+    [[nodiscard]] SettingError_t getSettingValueAsString(TypeofSettingValue type, const char* key, char* outputValueBuffer, size_t outputValueSize,
+                                                         SettingPermissions_t* outputPermissions = nullptr) const;
+
     static void freeSettingValue(const SettingValue_t* settingValue);
 };
 

@@ -1834,3 +1834,313 @@ TEST(SettingsStorage, restoreDefaultSettingsInvalidFilterMode)
     result = settingsStorage.restoreDefaultSettings("menu1", ALL_PERMISSIONS, static_cast<SettingPermissionsFilterMode_t>(-1));
     EXPECT_EQ(expectedResult, result);
 }
+
+TEST(SettingsStorage, GetDefaultSettingAsRealValid)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    double expectedValue = _valueSetting1.settingDefaultValueData.real;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+    SettingPermissions_t expectedPermissions = _valueSetting1.settingPermissions, outputPermissions;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getDefaultSettingAsReal("menu1/setting1", outputValue, &outputPermissions);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedPermissions, outputPermissions);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsRealValidShort)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    double expectedValue = _valueSetting1.settingDefaultValueData.real;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getDefaultSettingAsReal("menu1/setting1", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsRealInvalidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getDefaultSettingAsReal(nullptr, outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsRealVoidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getDefaultSettingAsReal("", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsRealKeyNotFound)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::KEY_NOT_FOUND_ERROR;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getDefaultSettingAsReal("menu1/setting3", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsRealTypeMismatch)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::TYPE_MISMATCH_ERROR;
+
+    // When
+    double outputValue;
+    result = settingsStorage.getDefaultSettingAsReal("menu1/setting2", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsIntValid)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    int64_t expectedValue = _valueSetting2.settingDefaultValueData.integer;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+    SettingPermissions_t expectedPermissions = _valueSetting2.settingPermissions, outputPermissions;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getDefaultSettingAsInt("menu1/setting2", outputValue, &outputPermissions);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedPermissions, outputPermissions);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsIntValidShort)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    int64_t expectedValue = _valueSetting2.settingDefaultValueData.integer;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getDefaultSettingAsInt("menu1/setting2", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedValue, outputValue);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsIntInvalidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getDefaultSettingAsInt(nullptr, outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsIntVoidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getDefaultSettingAsInt("", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsIntKeyNotFound)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::KEY_NOT_FOUND_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getDefaultSettingAsInt("menu1/setting3", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsIntTypeMismatch)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::TYPE_MISMATCH_ERROR;
+
+    // When
+    int64_t outputValue;
+    result = settingsStorage.getDefaultSettingAsInt("menu1/setting1", outputValue);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringValid)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    const char* expectedValue = _valueSetting3.settingDefaultValueData.string;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+    SettingPermissions_t expectedPermissions = _valueSetting3.settingPermissions, outputPermissions;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getDefaultSettingAsString("menu2/setting3", outputValueBuffer, outputValueSize, &outputPermissions);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(expectedPermissions, outputPermissions);
+    EXPECT_STREQ(expectedValue, outputValueBuffer);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringValidShort)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    const char* expectedValue = _valueSetting3.settingDefaultValueData.string;
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getDefaultSettingAsString("menu2/setting3", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ(expectedValue, outputValueBuffer);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringInvalidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getDefaultSettingAsString(nullptr, outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringVoidKey)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getDefaultSettingAsString("", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringKeyNotFound)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::KEY_NOT_FOUND_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getDefaultSettingAsString("menu2/setting4", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringTypeMismatch)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::TYPE_MISMATCH_ERROR;
+
+    // When
+    char outputValueBuffer[10];
+    size_t outputValueSize = 10;
+    result = settingsStorage.getDefaultSettingAsString("menu1/setting1", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, GetDefaultSettingAsStringInsufficientBufferSize)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    // Want
+    SettingsStorage::SettingError_t expected_result = SettingsStorage::INSUFFICIENT_BUFFER_SIZE_ERROR;
+
+    // When
+    char outputValueBuffer[5];
+    size_t outputValueSize = 5;
+    result = settingsStorage.getDefaultSettingAsString("menu2/setting3", outputValueBuffer, outputValueSize);
+
+    // Then
+    EXPECT_EQ(expected_result, result);
+}
