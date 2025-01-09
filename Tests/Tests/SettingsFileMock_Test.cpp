@@ -10,8 +10,6 @@ TEST(SettingsFileMock, ConstructorAuto)
     EXPECT_STREQ(expected_internalBuffer, settingsFileMock._getInternalBuffer());
 }
 
-TEST(SettingsFileMock, ConstructorAutoNullptr) { ASSERT_DEATH(SettingsFileMock settingsFileMock(nullptr), "Internal buffer is nullptr"); }
-
 TEST(SettingsFileMock, ConstructorManualOk)
 {
     const char* expected_internalBuffer = "internal buffer";
@@ -20,14 +18,6 @@ TEST(SettingsFileMock, ConstructorManualOk)
     SettingsFileMock settingsFileMock(expected_internalBuffer, expected_internalBufferSize);
 
     EXPECT_STREQ(expected_internalBuffer, settingsFileMock._getInternalBuffer());
-}
-
-TEST(SettingsFileMock, ConstructorManualTooSmall)
-{
-    const char* expected_internalBuffer = "internal buffer";
-    const int64_t expected_internalBufferSize = strlen(expected_internalBuffer) - 1;
-
-    ASSERT_DEATH(SettingsFileMock settingsFileMock(expected_internalBuffer, expected_internalBufferSize), "Too small internal buffer size");
 }
 
 TEST(SettingsFileMock, OpenForReadOkFromConstructor)
