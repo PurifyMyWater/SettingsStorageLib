@@ -196,21 +196,21 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         char* key = strtok(settingStr, "\t");
         if (key == nullptr)
         {
-            [[maybe_unused]] res = settingsFile->close();
+            res = settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
 
         char* valueTypeStr = strtok(nullptr, "\t");
         if (valueTypeStr == nullptr)
         {
-            [[maybe_unused]] res = settingsFile->close();
+            res = settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
 
         char* valueStr = strtok(nullptr, "\n");
         if (valueStr == nullptr)
         {
-            [[maybe_unused]] res = settingsFile->close();
+            res = settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
 
@@ -218,7 +218,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         long data = std::strtol(valueTypeStr, &end, 10);
         if (*end != '\0' || data < 0 || data >= static_cast<uint8_t>(MAX_SETTING_VALUE_TYPE_ENUM))
         {
-            [[maybe_unused]] res = settingsFile->close();
+            res = settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
         SettingValueType_t valueType = static_cast<SettingValueType_t>(data);
@@ -231,7 +231,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                 double realValue = std::strtod(valueStr, &end);
                 if (*end != '\0')
                 {
-                    [[maybe_unused]] res = settingsFile->close();
+                    res = settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
 
@@ -242,13 +242,13 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     settingError = addSettingAsReal(key, SettingPermissions_t::VOLATILE, realValue);
                     if (settingError != NO_ERROR)
                     {
-                        [[maybe_unused]] res = settingsFile->close();
+                        res = settingsFile->close();
                         return SETTINGS_FILESYSTEM_ERROR;
                     }
                 }
                 else if (settingError != NO_ERROR)
                 {
-                    [[maybe_unused]] res = settingsFile->close();
+                    res = settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
@@ -258,7 +258,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                 int64_t integerValue = std::strtoll(valueStr, &end, 10);
                 if (*end != '\0')
                 {
-                    [[maybe_unused]] res = settingsFile->close();
+                    res = settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
 
@@ -269,13 +269,13 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     settingError = addSettingAsInt(key, SettingPermissions_t::VOLATILE, integerValue);
                     if (settingError != NO_ERROR)
                     {
-                        [[maybe_unused]] res = settingsFile->close();
+                        res = settingsFile->close();
                         return SETTINGS_FILESYSTEM_ERROR;
                     }
                 }
                 else if (settingError != NO_ERROR)
                 {
-                    [[maybe_unused]] res = settingsFile->close();
+                    res = settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
@@ -289,26 +289,26 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     settingError = addSettingAsString(key, SettingPermissions_t::VOLATILE, valueStr);
                     if (settingError != NO_ERROR)
                     {
-                        [[maybe_unused]] res = settingsFile->close();
+                        res = settingsFile->close();
                         return SETTINGS_FILESYSTEM_ERROR;
                     }
                 }
                 else if (settingError != NO_ERROR)
                 {
-                    [[maybe_unused]] res = settingsFile->close();
+                    res = settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
                 break;
             default:
-                [[maybe_unused]] res = settingsFile->close();
+                res = settingsFile->close();
                 return SETTINGS_FILESYSTEM_ERROR;
         }
     }
 
     if (res != SettingsFile::EndOfFile)
     {
-        [[maybe_unused]] res = settingsFile->close();
+        res = settingsFile->close();
         return SETTINGS_FILESYSTEM_ERROR;
     }
 
