@@ -1,7 +1,18 @@
 #include "SettingsStorage.h"
 #include "LinuxOSShim.h"
-#include "SettingsParserMock.h"
+#include "SettingsFileMock.h"
 #include "gtest/gtest.h"
+
+constexpr char defaultSettingsFile[] = "menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n";
+constexpr int64_t defaultSettingsFileSize = sizeof(defaultSettingsFile) + 5000;
+
+void menu1RegisterSettigsCallback(SettingsStorage& settingsStorage)
+{
+    settingsStorage.addSettingAsReal("menu1/setting1", SettingPermissions_t::USER, 1.23);
+    settingsStorage.addSettingAsInt("menu1/setting2", SettingPermissions_t::USER, 45);
+}
+
+void menu2RegisterSettigsCallback(SettingsStorage& settingsStorage) { settingsStorage.addSettingAsString("menu2/setting3", SettingPermissions_t::USER, "string3"); }
 
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
     SettingsStorage::Settings_t(name);                                                                                                                                                                 \
@@ -27,12 +38,12 @@
 
 #define NEW_POPULATED_SETTINGS_STORAGE                                                                                                                                                                 \
     NEW_POPULATED_SETTINGS_T(settings);                                                                                                                                                                \
-    const char*(pathToSettingsFile) = "path/to/settings/file";                                                                                                                                         \
     SettingsStorage::SettingError_t result;                                                                                                                                                            \
-    SettingsParserMock* settingsParserMock = new SettingsParserMock(pathToSettingsFile);                                                                                                               \
-    settingsParserMock->setReadSettingsReturnResult(SettingsParser::NO_ERROR);                                                                                                                         \
-    settingsParserMock->setReadSettingsReturnValue(&settings);                                                                                                                                         \
-    SettingsStorage settingsStorage(pathToSettingsFile, &result, linuxOSShim, settingsParserMock)
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;                                                                                                                      \
+    registerSettingsCallbackList.push_back(menu1RegisterSettigsCallback);                                                                                                                              \
+    registerSettingsCallbackList.push_back(menu2RegisterSettigsCallback);                                                                                                                              \
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);                                                                                           \
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock)
 
 static LinuxOSShim linuxOSShim;
 
@@ -89,7 +100,7 @@ TEST(SettingPermissions, ToString_InvalidPermission)
     char buffer[PERMISSION_STRING_SIZE] = "";
     const char* expected_result = nullptr;
 
-    const char* result = settingPermissionToString(static_cast<SettingPermissions_t>(1 + static_cast<uint8_t>(ALL_PERMISSIONS)), buffer, PERMISSION_STRING_SIZE);
+    const char* result = settingPermissionToString(static_cast<SettingPermissions_t>(1 + static_cast<uint8_t>(ALL_PERMISSIONS_VOLATILE)), buffer, PERMISSION_STRING_SIZE);
     EXPECT_EQ(expected_result, result);
     EXPECT_STREQ("", buffer);
 }
@@ -97,7 +108,7 @@ TEST(SettingPermissions, ToString_InvalidPermission)
 TEST(SettingPermissions, ToString_System)
 {
     char buffer[PERMISSION_STRING_SIZE] = "";
-    const char* expected_result = "SYSTEM |       |     ";
+    const char* expected_result = "SYSTEM |       |      |         ";
     const char* result = settingPermissionToString(SettingPermissions_t::SYSTEM, buffer, PERMISSION_STRING_SIZE);
 
     EXPECT_NE(nullptr, result);
@@ -107,7 +118,7 @@ TEST(SettingPermissions, ToString_System)
 TEST(SettingPermissions, ToString_Admin)
 {
     char buffer[PERMISSION_STRING_SIZE] = "";
-    const char* expected_result = "       | ADMIN |     ";
+    const char* expected_result = "       | ADMIN |      |         ";
     const char* result = settingPermissionToString(SettingPermissions_t::ADMIN, buffer, PERMISSION_STRING_SIZE);
 
     EXPECT_NE(nullptr, result);
@@ -117,8 +128,18 @@ TEST(SettingPermissions, ToString_Admin)
 TEST(SettingPermissions, ToString_User)
 {
     char buffer[PERMISSION_STRING_SIZE] = "";
-    const char* expected_result = "       |       | USER";
+    const char* expected_result = "       |       | USER |         ";
     const char* result = settingPermissionToString(SettingPermissions_t::USER, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ToString_Volatile)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "       |       |      | VOLATILE";
+    const char* result = settingPermissionToString(SettingPermissions_t::VOLATILE, buffer, PERMISSION_STRING_SIZE);
 
     EXPECT_NE(nullptr, result);
     EXPECT_STREQ(expected_result, buffer);
@@ -127,8 +148,18 @@ TEST(SettingPermissions, ToString_User)
 TEST(SettingPermissions, ToString_All)
 {
     char buffer[PERMISSION_STRING_SIZE] = "";
-    const char* expected_result = "SYSTEM | ADMIN | USER";
+    const char* expected_result = "SYSTEM | ADMIN | USER |         ";
     const char* result = settingPermissionToString(ALL_PERMISSIONS, buffer, PERMISSION_STRING_SIZE);
+
+    EXPECT_NE(nullptr, result);
+    EXPECT_STREQ(expected_result, buffer);
+}
+
+TEST(SettingPermissions, ToString_All_Volatile)
+{
+    char buffer[PERMISSION_STRING_SIZE] = "";
+    const char* expected_result = "SYSTEM | ADMIN | USER | VOLATILE";
+    const char* result = settingPermissionToString(ALL_PERMISSIONS_VOLATILE, buffer, PERMISSION_STRING_SIZE);
 
     EXPECT_NE(nullptr, result);
     EXPECT_STREQ(expected_result, buffer);
@@ -137,7 +168,7 @@ TEST(SettingPermissions, ToString_All)
 TEST(SettingPermissions, ToString_None)
 {
     char buffer[PERMISSION_STRING_SIZE] = "";
-    const char* expected_result = "       |       |     ";
+    const char* expected_result = "       |       |      |         ";
     const char* result = settingPermissionToString(NO_PERMISSIONS, buffer, PERMISSION_STRING_SIZE);
 
     EXPECT_NE(nullptr, result);
@@ -149,101 +180,82 @@ TEST(SettingPermissions, ValidatePermissions)
     EXPECT_TRUE(validatePermissions(SettingPermissions_t::SYSTEM));
     EXPECT_TRUE(validatePermissions(SettingPermissions_t::ADMIN));
     EXPECT_TRUE(validatePermissions(SettingPermissions_t::USER));
+    EXPECT_TRUE(validatePermissions(SettingPermissions_t::VOLATILE));
     EXPECT_TRUE(validatePermissions(ALL_PERMISSIONS));
+    EXPECT_TRUE(validatePermissions(ALL_PERMISSIONS_VOLATILE));
     EXPECT_TRUE(validatePermissions(NO_PERMISSIONS));
-    EXPECT_FALSE(validatePermissions(static_cast<SettingPermissions_t>(1 + static_cast<uint8_t>(ALL_PERMISSIONS))));
+    EXPECT_FALSE(validatePermissions(static_cast<SettingPermissions_t>(1 + static_cast<uint8_t>(ALL_PERMISSIONS_VOLATILE))));
 }
 
-TEST(SettingsStorage, Constructor)
+TEST(SettingsStorage, ConstructorPersistent)
 {
     NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
-    // Want
-    const char*(pathToSettingsFile) = "path/to/settings/file";
-    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR, result;
-    SettingsParserMock* settingsParserMock = new SettingsParserMock(pathToSettingsFile);
-    settingsParserMock->setReadSettingsReturnResult(SettingsParser::NO_ERROR);
-    settingsParserMock->setReadSettingsReturnValue(&settings);
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
-    // When
-    SettingsStorage settingsStorage(pathToSettingsFile, &result, linuxOSShim, settingsParserMock);
-
-    // Then
-    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(SettingsFile::FileClosed, settingsFileMock->getOpenState());
     EXPECT_TRUE(settingsStorage.isPersistentStorageEnabled());
 }
 
-TEST(SettingsStorage, Constructor_NullPath)
+TEST(SettingsStorage, ConstructorNonPersistent)
 {
     NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
 
-    // Want
-    const char*(pathToSettingsFile) = nullptr;
-    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR, result;
-    SettingsParserMock* settingsParserMock = new SettingsParserMock(pathToSettingsFile);
-    settingsParserMock->setReadSettingsReturnResult(SettingsParser::INVALID_PATH_ERROR);
-    settingsParserMock->setReadSettingsReturnValue(&settings);
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList);
 
-    // When
-    SettingsStorage settingsStorage(pathToSettingsFile, &result, linuxOSShim, settingsParserMock);
-
-    // Then
-    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
     EXPECT_FALSE(settingsStorage.isPersistentStorageEnabled());
 }
 
-TEST(SettingsStorage, Constructor_EmptyPath)
+TEST(SettingsStorage, ConstructorFailSettingsFileSystemError)
 {
     NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
-    // Want
-    const char*(pathToSettingsFile) = "";
-    SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR, result;
-    SettingsParserMock* settingsParserMock = new SettingsParserMock(pathToSettingsFile);
-    settingsParserMock->setReadSettingsReturnResult(SettingsParser::INVALID_PATH_ERROR);
-    settingsParserMock->setReadSettingsReturnValue(&settings);
+    settingsFileMock->_setForceMockMode(true);
+    settingsFileMock->_setOpenForReadResult(SettingsFile::IOError); // FIXME this is a temporary mock of loadSettingsFromPersistentStorage
 
-    // When
-    SettingsStorage settingsStorage(pathToSettingsFile, &result, linuxOSShim, settingsParserMock);
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
-    // Then
-    EXPECT_EQ(expected_result, result);
-    EXPECT_FALSE(settingsStorage.isPersistentStorageEnabled());
-}
-
-TEST(SettingsStorage, Constructor_InvalidPath)
-{
-    NEW_POPULATED_SETTINGS_T(settings);
-
-    // Want
-    const char*(pathToSettingsFile) = "inexistant/path/to/settings/file";
-    SettingsStorage::SettingError_t expected_result = SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result;
-    SettingsParserMock* settingsParserMock = new SettingsParserMock(pathToSettingsFile);
-    settingsParserMock->setReadSettingsReturnResult(SettingsParser::FILE_NOT_FOUND_ERROR);
-    settingsParserMock->setReadSettingsReturnValue(&settings);
-
-    // When
-    SettingsStorage settingsStorage(pathToSettingsFile, &result, linuxOSShim, settingsParserMock);
-
-    // Then
-    EXPECT_EQ(expected_result, result);
+    EXPECT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result);
     EXPECT_TRUE(settingsStorage.isPersistentStorageEnabled());
+}
+
+TEST(SettingsStorage, Destructor)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
+
+    SettingsStorage* settingsStorage = new SettingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_TRUE(settingsStorage->isPersistentStorageEnabled());
+
+    EXPECT_NO_THROW(delete settingsStorage);
 }
 
 TEST(SettingsStorage, DisablePersistentStorage)
 {
     NEW_POPULATED_SETTINGS_T(settings);
 
-    // Want
-    SettingsStorage::SettingError_t expected_result = SettingsStorage::NO_ERROR, result;
-    SettingsParserMock* settingsParserMock = new SettingsParserMock("path/to/settings/file");
-    settingsParserMock->setReadSettingsReturnResult(SettingsParser::NO_ERROR);
-    settingsParserMock->setReadSettingsReturnValue(&settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
-    // Prepare
-    SettingsStorage settingsStorage("path/to/settings/file", &result, linuxOSShim, settingsParserMock);
-    EXPECT_EQ(expected_result, result);
-    EXPECT_TRUE(settingsStorage.isPersistentStorageEnabled());
+    settingsFileMock->_setForceMockMode(true);
+    settingsFileMock->_setOpenForReadResult(SettingsFile::Success); // FIXME this is a temporary mock of loadSettingsFromPersistentStorage
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
     // When
     ASSERT_TRUE(settingsStorage.disablePersistentStorage());
@@ -937,7 +949,7 @@ TEST(SettingsStorage, AddSettingKeyAsIntInvalidPermissions)
 
     // Want
     SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
-    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1);
+    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS_VOLATILE) + 1);
     int64_t expectedValue = 12;
 
     // When
@@ -1033,7 +1045,7 @@ TEST(SettingsStorage, AddSettingKeyAsRealInvalidPermissions)
 
     // Want
     SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
-    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1);
+    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS_VOLATILE) + 1);
     double expectedValue = 12.07;
 
     // When
@@ -1146,7 +1158,7 @@ TEST(SettingsStorage, AddSettingKeyAsStringInvalidPermissions)
 
     // Want
     SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
-    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1);
+    SettingPermissions_t permissions = static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS_VOLATILE) + 1);
     const char* expectedValue = "new string";
 
     // When
@@ -1516,7 +1528,7 @@ TEST(SettingsStorage, listSettingsKeysInvalidPermissions)
     SettingsStorage::SettingError_t expected_result = SettingsStorage::INVALID_INPUT_ERROR;
 
     // When
-    result = settingsStorage.listSettingsKeys("menu1", static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1), MatchSettingsWithAnyPermissionsListed, outputKeys);
+    result = settingsStorage.listSettingsKeys("menu1", static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS_VOLATILE) + 1), MatchSettingsWithAnyPermissionsListed, outputKeys);
 
     // Then
     EXPECT_EQ(expected_result, result);
@@ -1822,7 +1834,7 @@ TEST(SettingsStorage, restoreDefaultSettingsInvalidPermissions)
     NEW_POPULATED_SETTINGS_STORAGE;
     SettingsStorage::SettingError_t expectedResult = SettingsStorage::INVALID_INPUT_ERROR;
 
-    result = settingsStorage.restoreDefaultSettings("menu1", static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS) + 1), MatchSettingsWithAnyPermissionsListed);
+    result = settingsStorage.restoreDefaultSettings("menu1", static_cast<SettingPermissions_t>(static_cast<uint64_t>(ALL_PERMISSIONS_VOLATILE) + 1), MatchSettingsWithAnyPermissionsListed);
     EXPECT_EQ(expectedResult, result);
 }
 
@@ -2143,4 +2155,127 @@ TEST(SettingsStorage, GetDefaultSettingAsStringInsufficientBufferSize)
 
     // Then
     EXPECT_EQ(expected_result, result);
+}
+
+TEST(SettingsStorage, loadSettingsFromPersistentStorageValidVolatile)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n");
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, MatchSettingsWithAnyPermissionsListed, outputKeys));
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+
+    outputKeys.clear();
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys));
+
+    it = outputKeys.begin();
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, loadSettingsFromPersistentStorageValidNoVolatile)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    ASSERT_EQ(SettingsStorage::NO_ERROR, result);
+
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, MatchSettingsWithAnyPermissionsListed, outputKeys));
+
+    auto it = outputKeys.begin();
+    ASSERT_EQ(outputKeys.end(), it);
+
+    outputKeys.clear();
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", ALL_PERMISSIONS, MatchSettingsWithAnyPermissionsListed, outputKeys));
+
+    it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, storeSettingsFromPersistentStorageValidVolatile)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.storeSettingsInPersistentStorage());
+    EXPECT_STREQ("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n", settingsFileMock->_getInternalBuffer());
+
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, MatchSettingsWithAnyPermissionsListed, outputKeys));
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
+}
+
+TEST(SettingsStorage, storeSettingsFromPersistentStorageValidNoVolatile)
+{
+    NEW_POPULATED_SETTINGS_STORAGE;
+
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.storeSettingsInPersistentStorage());
+    EXPECT_STREQ("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n", settingsFileMock->_getInternalBuffer());
+
+    SettingsStorage::SettingsKeysList_t outputKeys;
+    EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, ExcludeSettingsWithAnyPermissionsListed, outputKeys));
+
+    auto it = outputKeys.begin();
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting1", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu1/setting2", it->c_str());
+    ++it;
+
+    ASSERT_NE(outputKeys.end(), it);
+    EXPECT_STREQ("menu2/setting3", it->c_str());
+    ++it;
+
+    ASSERT_EQ(outputKeys.end(), it);
 }

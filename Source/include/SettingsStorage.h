@@ -3,14 +3,18 @@
 
 #include <string>
 #include "OSShim.h"
+#include "SettingsFile.h"
 #include "libartcpp.h"
 #include "list"
 
+#warning "TODO: ADD readers/writers exclusion mechanism" // TODO: ADD readers/writers exclusion mechanism
+
 constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
-class SettingsParser;
+constexpr size_t PERMISSION_STRING_SIZE = 34;
 
-constexpr size_t PERMISSION_STRING_SIZE = 22;
+constexpr size_t MAX_KEY_SIZE = 512; // TODO add test for this value
+constexpr size_t MAX_STR_FMT_VALUE_SIZE = 32; // TODO add test for this value
 
 /**
  * @brief The permissions that can be granted to a setting.
@@ -27,7 +31,8 @@ enum class SettingPermissions_t : uint8_t
 {
     SYSTEM = 1,
     ADMIN = 2,
-    USER = 4
+    USER = 4,
+    VOLATILE = 8
 }; // Flags enabled enum that stores each setting visibility permissions.
 
 /// Enum that stores the filter modes for the permissions.
@@ -48,6 +53,9 @@ SettingPermissions_t operator&(SettingPermissions_t lhs, SettingPermissions_t rh
 /// All permissions are granted to a setting.
 const SettingPermissions_t ALL_PERMISSIONS = SettingPermissions_t::USER | SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM;
 
+/// All permissions are granted to a setting, and it is marked as volatile.
+const SettingPermissions_t ALL_PERMISSIONS_VOLATILE = SettingPermissions_t::USER | SettingPermissions_t::ADMIN | SettingPermissions_t::SYSTEM | SettingPermissions_t::VOLATILE;
+
 /// No permissions are granted to a setting.
 constexpr SettingPermissions_t NO_PERMISSIONS = static_cast<SettingPermissions_t>(0);
 
@@ -60,7 +68,15 @@ bool validatePermissions(SettingPermissions_t permissions);
 class SettingsStorage
 {
 public:
-    typedef std::list<std::string> SettingsKeysList_t;
+    /** Callback function that registers the settings of a component.
+     * Each component must register all their settings keys, and their default values using addSettingAs* functions.
+     **/
+    using RegisterSettingsCallback_t = void (*)(SettingsStorage& settingsStorage);
+
+    /// The list of callback functions that register the settings of a component. It will be called from the constructor.
+    using RegisterSettingsCallbackList_t = std::list<RegisterSettingsCallback_t>;
+
+    using SettingsKeysList_t = std::list<std::string>;
 
     /// Enum that stores the possible errors returned by the SettingsStorage API.
     typedef enum
@@ -79,7 +95,8 @@ public:
     {
         REAL,
         INTEGER,
-        STRING
+        STRING,
+        MAX_SETTING_VALUE_TYPE_ENUM
     } SettingValueType_t;
 
     /// Union with the types of data that can be saved.
@@ -106,20 +123,25 @@ public:
     typedef AdaptiveRadixTree<SettingValue_t> Settings_t;
 
     /**
-     * @brief Build a new Settings Storage object
+     * @brief Build a new Settings Storage object.
+     * It will register the settings of the components using the provided callback list
+     * and then load the setting's values from the persistent storage.
      *
-     * It will create a new settings storage object and synchronize it with the persistent storage settings file.
+     * @note If there are settings in the settingsFile that are not registered by the components,
+     * they will be loaded but marked as volatile,
+     * which means they will not be saved in the persistent storage.
      *
-     * @param pathToSettingsFile The path to the settings file synchronized with the settings object.
-     * @param result The result of the operation
-     * @param osShim The OS shim object used to interact with the OS.
-     * @param settingsParser The settings parser object used to read and write the settings to the persistent storage. If it is nullptr, the default settings parser will be used.
+     * @param result The result of the operation.
+     * @param osShim The OS shim object that will be used to interact with the OS.
+     * @param registerSettingsCallbackList The list of callback functions that register the settings of a component.
+     * @param settingsFile The settings file object that will be used to interact with the settings file.
+     * If it is nullptr, the settings will not be saved in the persistent storage.
      *
      * @retval NO_ERROR The settings were successfully loaded.
-     * @retval SETTINGS_FILESYSTEM_ERROR The settings file is corrupted or doesn't exist, and default settings were loaded instead of saved ones.
-     * @retval INVALID_INPUT_ERROR The pathToSettingsFile is nullptr or "" and default settings were loaded instead of saved ones, and the persistent storage was disabled.
+     * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted, and the settings were not loaded.
+     * Instead, the settings have been set to default values.
      */
-    SettingsStorage(const char* pathToSettingsFile, SettingError_t* result, OSShim& osShim, SettingsParser* settingsParser = nullptr);
+    SettingsStorage(SettingError_t& result, OSShim& osShim, const RegisterSettingsCallbackList_t& registerSettingsCallbackList, SettingsFile* settingsFile = nullptr);
 
     /**
      * @brief Destroy the Settings Storage object and free all the associated memory
@@ -167,7 +189,7 @@ public:
      * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted, and the settings were not saved.
      * @retval SETTINGS_FILESYSTEM_ERROR The persisten storage is disabled, and the settings were not saved.
      */
-    [[nodiscard]] SettingError_t storeSettingsInPersistentStorage();
+    [[nodiscard]] SettingError_t storeSettingsInPersistentStorage() const;
 
     /**
      * @brief This function loads the settings from the persistent storage, replacing the old copy ot them.
@@ -175,7 +197,7 @@ public:
      * @retval NO_ERROR The settings were successfully loaded.
      * @retval SETTINGS_FILESYSTEM_ERROR The settings file is corrupted and settings were not modified.
      */
-    [[nodiscard]] SettingError_t loadSettingsFromPersistentStorage();
+    [[nodiscard]] SettingError_t loadSettingsFromPersistentStorage() const;
 
     /**
      * @brief This lists the settings keys that match the provided key prefix.
@@ -369,12 +391,15 @@ private:
     using TypeofSettingValue = enum { Value, DefaultValue };
 
     OSShim_Mutex* moduleConfigMutex;
-    SettingsParser* settingsParser;
+    SettingsFile* settingsFile;
     bool persistentStorageEnabled;
     Settings_t* settings;
     OSShim* osShim;
 
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
+    static int freeSettingValuesCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
+    static int storeSettingsInPersistentStorageCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
+
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
     [[nodiscard]] SettingError_t getSettingValueAsInt(TypeofSettingValue type, const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;
     [[nodiscard]] SettingError_t getSettingValueAsReal(TypeofSettingValue type, const char* key, double& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;

@@ -1,7 +1,8 @@
 #include "SettingsStorage.h"
-
-#include <SettingsParser.h>
 #include <cstring>
+#include <format>
+
+#include "crc.h"
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
 SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs) { return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) | static_cast<std::byte>(rhs)); }
@@ -34,54 +35,60 @@ const char* settingPermissionToString(const SettingPermissions_t permission, cha
     }
     if (static_cast<bool>(permission & SettingPermissions_t::USER))
     {
-        strcat(permissionString, "USER");
+        strcat(permissionString, "USER | ");
     }
     else
     {
-        strcat(permissionString, "    ");
+        strcat(permissionString, "     | ");
+    }
+    if (static_cast<bool>(permission & SettingPermissions_t::VOLATILE))
+    {
+        strcat(permissionString, "VOLATILE");
+    }
+    else
+    {
+        strcat(permissionString, "        ");
     }
     return permissionString;
 }
 
 
-SettingsStorage::SettingsStorage(const char* pathToSettingsFile, SettingError_t* result, OSShim& osShim, SettingsParser* settingsParser)
+SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const RegisterSettingsCallbackList_t& registerSettingsCallbackList, SettingsFile* settingsFile)
 {
-    *result = NO_ERROR;
+    result = NO_ERROR;
     this->osShim = &osShim;
     this->moduleConfigMutex = osShim.osCreateMutex();
     assert(this->moduleConfigMutex != nullptr && "Mutex creation failed");
 
-    this->persistentStorageEnabled = true;
-    this->settings = nullptr;
+    this->persistentStorageEnabled = false;
+    this->settings = new Settings_t();
 
-    if (pathToSettingsFile == nullptr || pathToSettingsFile[0] == '\0')
+    for (auto& callback: registerSettingsCallbackList)
     {
-        *result = INVALID_INPUT_ERROR;
-        disablePersistentStorage();
-        this->settings = new Settings_t();
-        restoreDefaultSettings(""); // Restore all settings
-        return;
+        if (callback != nullptr)
+        {
+            callback(*this);
+        }
     }
 
-    this->settingsParser = settingsParser;
-    if (settingsParser == nullptr)
+    this->settingsFile = settingsFile;
+    if (settingsFile != nullptr)
     {
-        this->settingsParser = new SettingsParser(pathToSettingsFile);
-    }
-
-    SettingsParser::ParserError_t parserError;
-    this->settings = this->settingsParser->readSettingsFromPersistentStorage(&parserError); // Always returns a valid pointer, with either the settings or an empty tree.
-
-    if (parserError != SettingsParser::NO_ERROR)
-    {
-        *result = SETTINGS_FILESYSTEM_ERROR;
-        restoreDefaultSettings(""); // Restore all settings
-        return;
+        this->persistentStorageEnabled = true;
+        result = loadSettingsFromPersistentStorage();
+        if (result != NO_ERROR)
+        {
+            assert(NO_ERROR == restoreDefaultSettings(""));
+        }
     }
 }
 
-SettingsStorage::~SettingsStorage() // TODO Clean up settings
+SettingsStorage::~SettingsStorage()
 {
+    settings->iterateOverAll(freeSettingValuesCallback, nullptr);
+
+    delete settings;
+    delete moduleConfigMutex;
 }
 
 bool SettingsStorage::isPersistentStorageEnabled() const
@@ -131,14 +138,187 @@ SettingsStorage::SettingError_t SettingsStorage::restoreDefaultSettings(const ch
             return result;
         }
 
-        outputValue->settingValueData = outputValue->settingDefaultValueData;
+        if (outputValue->settingValueType == STRING)
+        {
+            free(outputValue->settingValueData.string);
+            outputValue->settingValueData.string = strdup(outputValue->settingDefaultValueData.string);
+        }
+        else
+        {
+            outputValue->settingValueData = outputValue->settingDefaultValueData;
+        }
+
     }
 
     return NO_ERROR;
 }
 
-SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorage() {}
-SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() {}
+SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorage() const
+{
+
+    SettingsFile::SettingsFileResult res = settingsFile->openForWrite();
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    res = static_cast<SettingsFile::SettingsFileResult>(settings->iterateOverAll(storeSettingsInPersistentStorageCallback, settingsFile));
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    res = settingsFile->close();
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+    return NO_ERROR;
+}
+
+SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() const
+{
+    SettingsFile::SettingsFileResult res = settingsFile->openForRead();
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+    while (res == SettingsFile::Success)
+    {
+        char settingStr[MAX_KEY_SIZE + MAX_STR_FMT_VALUE_SIZE];
+        res = settingsFile->readLine(settingStr, MAX_KEY_SIZE);
+
+        if (res == SettingsFile::EndOfFile)
+        {
+            break;
+        }
+
+        char* key = strtok(settingStr, "\t");
+        if (key == nullptr)
+        {
+            [[maybe_unused]] res = settingsFile->close();
+            return SETTINGS_FILESYSTEM_ERROR;
+        }
+
+        char* valueTypeStr = strtok(nullptr, "\t");
+        if (valueTypeStr == nullptr)
+        {
+            [[maybe_unused]] res = settingsFile->close();
+            return SETTINGS_FILESYSTEM_ERROR;
+        }
+
+        char* valueStr = strtok(nullptr, "\n");
+        if (valueStr == nullptr)
+        {
+            [[maybe_unused]] res = settingsFile->close();
+            return SETTINGS_FILESYSTEM_ERROR;
+        }
+
+        char* end;
+        long data = std::strtol(valueTypeStr, &end, 10);
+        if (*end != '\0' || data < 0 || data >= static_cast<uint8_t>(MAX_SETTING_VALUE_TYPE_ENUM))
+        {
+            [[maybe_unused]] res = settingsFile->close();
+            return SETTINGS_FILESYSTEM_ERROR;
+        }
+        SettingValueType_t valueType = static_cast<SettingValueType_t>(data);
+        SettingError_t settingError;
+
+        switch (valueType)
+        {
+            case REAL:
+            {
+                double realValue = std::strtod(valueStr, &end);
+                if (*end != '\0')
+                {
+                    [[maybe_unused]] res = settingsFile->close();
+                    return SETTINGS_FILESYSTEM_ERROR;
+                }
+
+                settingError = putSettingValueAsReal(key, realValue);
+
+                if (settingError == KEY_NOT_FOUND_ERROR)
+                {
+                    settingError = addSettingAsReal(key, SettingPermissions_t::VOLATILE, realValue);
+                    if (settingError != NO_ERROR)
+                    {
+                        [[maybe_unused]] res = settingsFile->close();
+                        return SETTINGS_FILESYSTEM_ERROR;
+                    }
+                }
+                else if (settingError != NO_ERROR)
+                {
+                    [[maybe_unused]] res = settingsFile->close();
+                    return SETTINGS_FILESYSTEM_ERROR;
+                }
+            }
+            break;
+            case INTEGER:
+            {
+                int64_t integerValue = std::strtoll(valueStr, &end, 10);
+                if (*end != '\0')
+                {
+                    [[maybe_unused]] res = settingsFile->close();
+                    return SETTINGS_FILESYSTEM_ERROR;
+                }
+
+                settingError = putSettingValueAsInt(key, integerValue);
+
+                if (settingError == KEY_NOT_FOUND_ERROR)
+                {
+                    settingError = addSettingAsInt(key, SettingPermissions_t::VOLATILE, integerValue);
+                    if (settingError != NO_ERROR)
+                    {
+                        [[maybe_unused]] res = settingsFile->close();
+                        return SETTINGS_FILESYSTEM_ERROR;
+                    }
+                }
+                else if (settingError != NO_ERROR)
+                {
+                    [[maybe_unused]] res = settingsFile->close();
+                    return SETTINGS_FILESYSTEM_ERROR;
+                }
+            }
+            break;
+            case STRING:
+            {
+                settingError = putSettingValueAsString(key, valueStr);
+
+                if (settingError == KEY_NOT_FOUND_ERROR)
+                {
+                    settingError = addSettingAsString(key, SettingPermissions_t::VOLATILE, valueStr);
+                    if (settingError != NO_ERROR)
+                    {
+                        [[maybe_unused]] res = settingsFile->close();
+                        return SETTINGS_FILESYSTEM_ERROR;
+                    }
+                }
+                else if (settingError != NO_ERROR)
+                {
+                    [[maybe_unused]] res = settingsFile->close();
+                    return SETTINGS_FILESYSTEM_ERROR;
+                }
+            }
+                break;
+            default:
+                [[maybe_unused]] res = settingsFile->close();
+                return SETTINGS_FILESYSTEM_ERROR;
+        }
+    }
+
+    if (res != SettingsFile::EndOfFile)
+    {
+        [[maybe_unused]] res = settingsFile->close();
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    res = settingsFile->close();
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+    return NO_ERROR;
+}
 
 int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
 {
@@ -188,6 +368,60 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
         default:
             return INVALID_INPUT_ERROR;
     }
+}
+
+int SettingsStorage::freeSettingValuesCallback([[maybe_unused]] void* data, [[maybe_unused]] const unsigned char* key, [[maybe_unused]] uint32_t key_len, void* value)
+{
+    auto const* settingValue = static_cast<SettingValue_t* const>(value);
+    freeSettingValue(settingValue);
+
+    return NO_ERROR;
+}
+
+int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
+{
+    auto* settingsFile = static_cast<SettingsFile*>(data);
+    auto const* settingValue = static_cast<SettingValue_t* const>(value);
+
+    SettingsFile::SettingsFileResult res = settingsFile->write(reinterpret_cast<const char*>(key), key_len);
+    if (res != SettingsFile::Success)
+    {
+        return res;
+    }
+
+    {
+        const std::string formattedString = std::format("\t{}\t", static_cast<uint8_t>(settingValue->settingValueType));
+        res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
+        if (res != SettingsFile::Success)
+        {
+            return res;
+        }
+    }
+
+    switch (settingValue->settingValueType)
+    {
+        case REAL:
+        {
+            std::string formattedString = std::format("{:.{}g}\n", settingValue->settingValueData.real, std::numeric_limits<double>::max_digits10);
+            res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
+            break;
+        }
+        case INTEGER:
+        {
+            std::string formattedString = std::format("{}\n", settingValue->settingValueData.integer);
+            res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
+            break;
+        }
+        case STRING:
+        {
+            std::string formattedString = std::format("{}\n", settingValue->settingValueData.string);
+            res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
+            break;
+        }
+        default:
+            assert(false && "Invalid setting value type");
+    }
+    return res;
 }
 
 SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char* keyPrefix, SettingPermissions_t permissions, SettingPermissionsFilterMode_t filterMode,
@@ -365,7 +599,7 @@ SettingsStorage::SettingError_t SettingsStorage::getDefaultSettingAsString(const
     return getSettingValueAsString(DefaultValue, key, outputValueBuffer, outputValueSize, outputPermissions);
 }
 
-bool validatePermissions(const SettingPermissions_t permissions) { return permissions <= ALL_PERMISSIONS; }
+bool validatePermissions(const SettingPermissions_t permissions) { return permissions <= ALL_PERMISSIONS_VOLATILE; }
 
 SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key, SettingValue_t*& outputValue) const
 {
@@ -477,11 +711,13 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingValueAsString(const T
     return NO_ERROR;
 }
 
+// TODO add coverage for this function
 void SettingsStorage::freeSettingValue(const SettingValue_t* settingValue)
 {
     if (settingValue->settingValueType == STRING)
     {
         free(settingValue->settingValueData.string);
+        free(settingValue->settingDefaultValueData.string);
     }
     delete settingValue;
 }
