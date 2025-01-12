@@ -19,35 +19,35 @@ const char* settingPermissionToString(const SettingPermissions_t permission, cha
     }
     if (static_cast<bool>(permission & SettingPermissions_t::SYSTEM))
     {
-        strcpy(permissionString, "SYSTEM | ");
+        strncpy(permissionString, "SYSTEM | ", permissionStringSize);
     }
     else
     {
-        strcpy(permissionString, "       | ");
+        strncpy(permissionString, "       | ", permissionStringSize);
     }
     if (static_cast<bool>(permission & SettingPermissions_t::ADMIN))
     {
-        strcat(permissionString, "ADMIN | ");
+        strncat(permissionString, "ADMIN | ", permissionStringSize);
     }
     else
     {
-        strcat(permissionString, "      | ");
+        strncat(permissionString, "      | ", permissionStringSize);
     }
     if (static_cast<bool>(permission & SettingPermissions_t::USER))
     {
-        strcat(permissionString, "USER | ");
+        strncat(permissionString, "USER | ", permissionStringSize);
     }
     else
     {
-        strcat(permissionString, "     | ");
+        strncat(permissionString, "     | ", permissionStringSize);
     }
     if (static_cast<bool>(permission & SettingPermissions_t::VOLATILE))
     {
-        strcat(permissionString, "VOLATILE");
+        strncat(permissionString, "VOLATILE", permissionStringSize);
     }
     else
     {
-        strcat(permissionString, "        ");
+        strncat(permissionString, "        ", permissionStringSize);
     }
     return permissionString;
 }
@@ -705,7 +705,7 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingValueAsString(const T
     {
         *outputPermissions = value->settingPermissions;
     }
-    strcpy(outputValueBuffer, outputValue);
+    strncpy(outputValueBuffer, outputValue, outputValueSize);
     outputValueBuffer[outputValueSize] = '\0';
 
     return NO_ERROR;
