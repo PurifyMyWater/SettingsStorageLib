@@ -147,7 +147,6 @@ SettingsStorage::SettingError_t SettingsStorage::restoreDefaultSettings(const ch
         {
             outputValue->settingValueData = outputValue->settingDefaultValueData;
         }
-
     }
 
     return NO_ERROR;
@@ -299,7 +298,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
-                break;
+            break;
             default:
                 res = settingsFile->close();
                 return SETTINGS_FILESYSTEM_ERROR;

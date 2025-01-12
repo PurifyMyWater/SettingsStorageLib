@@ -12,7 +12,7 @@
 class SettingsFile
 {
 public:
-    using SettingsFileResult = enum { EndOfFile = -1, Success = 0, InvalidState, IOError};
+    using SettingsFileResult = enum { EndOfFile = -1, Success = 0, InvalidState, IOError };
     using FileStatus = enum { FileClosed = 0, FileOpenedForRead, FileOpenedForWrite };
 
     [[nodiscard]] virtual SettingsFileResult openForRead() = 0;
@@ -29,4 +29,4 @@ public:
     virtual ~SettingsFile() = default;
 };
 
-#endif //SETTINGSFILE_H
+#endif // SETTINGSFILE_H

@@ -199,10 +199,7 @@ SettingsFile::SettingsFileResult SettingsFileMock::close()
     return Success;
 }
 
-SettingsFile::FileStatus SettingsFileMock::getOpenState()
-{
-    return this->fileStatus;
-}
+SettingsFile::FileStatus SettingsFileMock::getOpenState() { return this->fileStatus; }
 
 char* SettingsFileMock::_getInternalBuffer() const { return this->internalBuffer; }
 

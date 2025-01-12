@@ -53,7 +53,7 @@ private:
     SettingsFileResult readResult;
     char readOutput;
     SettingsFileResult readLineResult;
-    char readLineOutput[1024];
+    char readLineOutput[1024]{};
     SettingsFileResult writeResult;
     SettingsFileResult writeBufferResult;
     SettingsFileResult openForReadResult;

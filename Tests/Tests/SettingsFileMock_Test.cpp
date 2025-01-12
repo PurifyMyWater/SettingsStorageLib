@@ -13,7 +13,7 @@ TEST(SettingsFileMock, ConstructorAuto)
 TEST(SettingsFileMock, ConstructorManualOk)
 {
     const char* expected_internalBuffer = "internal buffer";
-    const int64_t expected_internalBufferSize = strlen(expected_internalBuffer) + 30;
+    const int64_t expected_internalBufferSize = static_cast<int64_t>(strlen(expected_internalBuffer)) + 30;
 
     SettingsFileMock settingsFileMock(expected_internalBuffer, expected_internalBufferSize);
 
