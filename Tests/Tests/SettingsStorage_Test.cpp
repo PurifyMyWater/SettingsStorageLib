@@ -192,6 +192,7 @@ TEST(SettingsStorage, ConstructorPersistent)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsStorage::SettingError_t result;
     SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    registerSettingsCallbackList.push_back(menu1RegisterSettigsCallback);
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
@@ -201,11 +202,41 @@ TEST(SettingsStorage, ConstructorPersistent)
     EXPECT_TRUE(settingsStorage.isPersistentStorageEnabled());
 }
 
+TEST(SettingsStorage, ConstructorPersistentNullCallbackIgnored)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    registerSettingsCallbackList.push_back(menu1RegisterSettigsCallback);
+    registerSettingsCallbackList.push_back(nullptr);
+    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_EQ(SettingsFile::FileClosed, settingsFileMock->getOpenState());
+    EXPECT_TRUE(settingsStorage.isPersistentStorageEnabled());
+}
+
+
 TEST(SettingsStorage, ConstructorNonPersistent)
 {
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsStorage::SettingError_t result;
     SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList);
+
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+    EXPECT_FALSE(settingsStorage.isPersistentStorageEnabled());
+}
+
+TEST(SettingsStorage, ConstructorNonPersistentNullCallbackIgnored)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    registerSettingsCallbackList.push_back(nullptr);
 
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList);
 
@@ -221,7 +252,7 @@ TEST(SettingsStorage, ConstructorFailSettingsFileSystemError)
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
     settingsFileMock->_setForceMockMode(true);
-    settingsFileMock->_setOpenForReadResult(SettingsFile::IOError); // FIXME this is a temporary mock of loadSettingsFromPersistentStorage
+    settingsFileMock->_setOpenForReadResult(SettingsFile::IOError);
 
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
