@@ -380,7 +380,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                 }
             }
             break;
-            [[maybe_unused]] default:
+            default:
                 res = settingsFile->close();
                 return SETTINGS_FILESYSTEM_ERROR;
         }
