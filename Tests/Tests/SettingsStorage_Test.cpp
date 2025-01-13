@@ -2300,6 +2300,18 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidCRC)
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result);
 }
 
+TEST(SettingsStorage, loadSettingsFromPersistentStorageDataAfterCRC)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\n\r1048123282\nmenu2/setting1\t0\t19.234\n");
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result);
+}
+
 TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidFormatOneTab)
 {
     NEW_POPULATED_SETTINGS_T(settings);
