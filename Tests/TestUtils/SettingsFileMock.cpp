@@ -83,7 +83,7 @@ SettingsFile::SettingsFileResult SettingsFileMock::readLine(char* buffer, uint32
         return EndOfFile;
     }
 
-    const uint32_t maxSize = bufferSize -1; // Leave space for the last character
+    const uint32_t maxSize = bufferSize - 1; // Leave space for the last character
     char c = internalBuffer[fileDataIndex++];
     int64_t i;
     for (i = 0; i < maxSize && fileDataIndex <= fileDataSize && c != '\n' && c != '\0'; i++, c = internalBuffer[fileDataIndex++])

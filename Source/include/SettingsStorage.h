@@ -2,10 +2,10 @@
 #define SETTINGSSTORAGE_SETTINGS_H
 
 #include <string>
+#include "CRC.h"
 #include "OSShim.h"
 #include "SettingsFile.h"
 #include "libartcpp.h"
-#include "CRC.h"
 #include "list"
 
 #warning "TODO: ADD readers/writers exclusion mechanism" // TODO: ADD readers/writers exclusion mechanism
