@@ -2,6 +2,7 @@
 #define SETTINGSFILE_H
 
 #include <cstdint>
+#include <string>
 
 /**
  * @brief This class is an interface for a settings file.
@@ -37,14 +38,13 @@ public:
     /**
      * @brief Read a line from the file. (Including the newline character '\n')
      * @param buffer The buffer to store the line read from the file.
-     * @param bufferSize The size of the buffer.
      * @return SettingsFileResult The result of the operation.
      * @retval EndOfFile The end of the file was reached, and all the remaining data is stored in the buffer.
      * @retval Success The line was successfully read.
      * @retval InvalidState The file is not open.
      * @retval IOError An error occurred while reading the file.
      */
-    [[nodiscard]] virtual SettingsFileResult readLine(char* buffer, uint32_t bufferSize) = 0;
+    [[nodiscard]] virtual SettingsFileResult readLine(std::string& buffer) = 0;
 
     /**
      * @brief Open the file for writing.
@@ -67,13 +67,12 @@ public:
     /**
      * @brief Write a buffer to the file.
      * @param data The buffer to write to the file.
-     * @param dataSize The size of the buffer.
      * @return SettingsFileResult The result of the operation.
      * @retval Success The buffer was successfully written.
      * @retval InvalidState The file is not open.
      * @retval IOError An error occurred while writing the file.
      */
-    [[nodiscard]] virtual SettingsFileResult write(const char* data, uint32_t dataSize) = 0;
+    [[nodiscard]] virtual SettingsFileResult write(const std::string& data) = 0;
 
     /**
      * @brief Close the file.

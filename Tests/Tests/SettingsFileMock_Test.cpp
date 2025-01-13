@@ -248,11 +248,11 @@ TEST(SettingsFileMock, ReadLineOk)
 
     SettingsFile::SettingsFileResult expected_result = SettingsFile::Success;
     settingsFileMock.openForRead();
-    char buffer[100];
-    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+    std::string buffer;
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
-    EXPECT_STREQ(expected_internalBuffer, buffer);
+    EXPECT_STREQ(expected_internalBuffer, buffer.c_str());
 }
 
 TEST(SettingsFileMock, ReadLineOkNewLine)
@@ -263,11 +263,11 @@ TEST(SettingsFileMock, ReadLineOkNewLine)
 
     SettingsFile::SettingsFileResult expected_result = SettingsFile::Success;
     settingsFileMock.openForRead();
-    char buffer[100];
-    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+    std::string buffer;
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
-    EXPECT_STREQ(expected_internalBuffer, buffer);
+    EXPECT_STREQ(expected_internalBuffer, buffer.c_str());
 }
 
 TEST(SettingsFileMock, ReadLineFailFromConstructor)
@@ -277,8 +277,8 @@ TEST(SettingsFileMock, ReadLineFailFromConstructor)
     SettingsFileMock settingsFileMock(expected_internalBuffer);
 
     SettingsFile::SettingsFileResult expected_result = SettingsFile::InvalidState;
-    char buffer[100];
-    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+    std::string buffer;
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
 }
@@ -292,8 +292,8 @@ TEST(SettingsFileMock, ReadLineFailFromClosed)
     SettingsFile::SettingsFileResult expected_result = SettingsFile::InvalidState;
     settingsFileMock.openForRead();
     settingsFileMock.close();
-    char buffer[100];
-    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+    std::string buffer;
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
 }
@@ -306,18 +306,19 @@ TEST(SettingsFileMock, ReadLineFailFromEndOfFile)
 
     SettingsFile::SettingsFileResult expected_result = SettingsFile::Success;
     settingsFileMock.openForRead();
-    char buffer[100];
-    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+    std::string buffer;
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
-    EXPECT_STREQ("internal buffer\n", buffer);
+    EXPECT_STREQ("internal buffer\n", buffer.c_str());
 
-    result = settingsFileMock.readLine(buffer, 100);
+    buffer.clear();
+    result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
-    EXPECT_STREQ("buffer internal", buffer);
+    EXPECT_STREQ("buffer internal", buffer.c_str());
 
-    result = settingsFileMock.readLine(buffer, 100);
+    result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(SettingsFile::EndOfFile, result);
 }
@@ -371,7 +372,7 @@ TEST(SettingsFileMock, WriteBuffferOk)
 
     SettingsFile::SettingsFileResult expected_result = SettingsFile::Success;
     settingsFileMock.openForWrite();
-    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc", 3);
+    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc");
     settingsFileMock.close();
 
     EXPECT_EQ(expected_result, result);
@@ -385,7 +386,7 @@ TEST(SettingsFileMock, WriteBuffferFailFromConstructor)
     SettingsFileMock settingsFileMock(expected_internalBuffer);
 
     SettingsFile::SettingsFileResult expected_result = SettingsFile::InvalidState;
-    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc", 3);
+    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc");
 
     EXPECT_EQ(expected_result, result);
 }
@@ -399,7 +400,7 @@ TEST(SettingsFileMock, WriteBuffferFailFromClosed)
     SettingsFile::SettingsFileResult expected_result = SettingsFile::InvalidState;
     settingsFileMock.openForWrite();
     settingsFileMock.close();
-    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc", 3);
+    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc");
 
     EXPECT_EQ(expected_result, result);
 }
@@ -476,11 +477,11 @@ TEST(SettingsFileMock, FullMockReadLine)
     settingsFileMock._setReadLineResult(expected_result);
     settingsFileMock._setReadLineOutput("line");
     settingsFileMock.openForRead();
-    char buffer[100];
-    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+    std::string buffer;
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer);
 
     EXPECT_EQ(expected_result, result);
-    EXPECT_STREQ("line", buffer);
+    EXPECT_STREQ("line", buffer.c_str());
 }
 
 TEST(SettingsFileMock, FullMockWrite)
@@ -509,7 +510,7 @@ TEST(SettingsFileMock, FullMockWriteBuffer)
     SettingsFile::SettingsFileResult expected_result = SettingsFile::Success;
     settingsFileMock._setWriteBufferResult(expected_result);
     settingsFileMock.openForWrite();
-    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc", 3);
+    SettingsFile::SettingsFileResult result = settingsFileMock.write("abc");
     settingsFileMock.close();
 
     EXPECT_EQ(expected_result, result);

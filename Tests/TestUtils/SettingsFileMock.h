@@ -10,11 +10,11 @@ public:
 
     SettingsFileResult read(char* byte) override;
 
-    SettingsFileResult readLine(char* buffer, uint32_t bufferSize) override;
+    SettingsFileResult readLine(std::string& buffer) override;
 
     SettingsFileResult write(char byte) override;
 
-    SettingsFileResult write(const char* data, uint32_t dataSize) override;
+    SettingsFileResult write(const std::string& data) override;
 
     SettingsFileResult openForRead() override;
 

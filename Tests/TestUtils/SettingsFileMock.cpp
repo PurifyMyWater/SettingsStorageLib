@@ -65,15 +65,15 @@ SettingsFile::SettingsFileResult SettingsFileMock::read(char* byte)
     return Success;
 }
 
-SettingsFile::SettingsFileResult SettingsFileMock::readLine(char* buffer, uint32_t bufferSize)
+SettingsFile::SettingsFileResult SettingsFileMock::readLine(std::string& buffer)
 {
     if (fullMockEnabled)
     {
-        strcpy(buffer, readLineOutput);
+        buffer = readLineOutput;
         return readLineResult;
     }
 
-    if (this->fileStatus != FileOpenedForRead || buffer == nullptr || bufferSize == 0)
+    if (this->fileStatus != FileOpenedForRead)
     {
         return InvalidState;
     }
@@ -83,15 +83,12 @@ SettingsFile::SettingsFileResult SettingsFileMock::readLine(char* buffer, uint32
         return EndOfFile;
     }
 
-    const uint32_t maxSize = bufferSize - 1; // Leave space for the last character
     char c = internalBuffer[fileDataIndex++];
-    int64_t i;
-    for (i = 0; i < maxSize && fileDataIndex <= fileDataSize && c != '\n' && c != '\0'; i++, c = internalBuffer[fileDataIndex++])
+    for (; fileDataIndex <= fileDataSize && c != '\n' && c != '\0'; c = internalBuffer[fileDataIndex++])
     {
-        buffer[i] = c;
+        buffer += c;
     }
-    buffer[i] = c;
-    buffer[i + 1] = '\0';
+    buffer += c;
     return Success;
 }
 
@@ -118,26 +115,26 @@ SettingsFile::SettingsFileResult SettingsFileMock::write(char byte)
     return Success;
 }
 
-SettingsFile::SettingsFileResult SettingsFileMock::write(const char* data, uint32_t dataSize)
+SettingsFile::SettingsFileResult SettingsFileMock::write(const std::string& data)
 {
     if (fullMockEnabled)
     {
         return writeBufferResult;
     }
 
-    if (this->fileStatus != FileOpenedForWrite || data == nullptr || dataSize == 0)
+    if (this->fileStatus != FileOpenedForWrite)
     {
         return InvalidState;
     }
 
-    for (int64_t i = 0; i < dataSize; i++)
+    for (const char i : data)
     {
         if (this->fileDataIndex >= this->internalBufferSize - 1)
         {
             return EndOfFile;
         }
 
-        this->internalBuffer[this->fileDataIndex++] = data[i];
+        this->internalBuffer[this->fileDataIndex++] = i;
     }
     this->internalBuffer[this->fileDataIndex] = '\0';
 

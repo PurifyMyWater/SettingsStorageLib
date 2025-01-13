@@ -10,12 +10,10 @@
 
 #warning "TODO: ADD readers/writers exclusion mechanism" // TODO: ADD readers/writers exclusion mechanism
 
+// TODO Separate exclusion mechanism from the SettingsStorage class to a child class. (including moduleConfigMutex)
 constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
 constexpr size_t PERMISSION_STRING_SIZE = 34;
-
-constexpr size_t MAX_KEY_SIZE = 512; // TODO add test for this value
-constexpr size_t MAX_STR_FMT_VALUE_SIZE = 32; // TODO add test for this value
 
 /**
  * @brief The permissions that can be granted to a setting.
@@ -258,7 +256,7 @@ public:
 
     /**
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
-     * @param key The key of the setting to create.
+     * @param key The key of the setting to create. It must not contain the tab (\t) character.
      * @param permissions The set of permissions associated with the setting.
      * @param defaultValue The default value of the setting.
      * @return SettingError_t The result of the operation.
@@ -273,7 +271,7 @@ public:
 
     /**
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
-     * @param key The key of the setting to create.
+     * @param key The key of the setting to create. It must not contain the tab (\t) character.
      * @param permissions The set of permissions associated with the setting.
      * @param defaultValue The default value of the setting.
      * @return SettingError_t The result of the operation.
@@ -288,7 +286,7 @@ public:
 
     /**
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
-     * @param key The key of the setting to create.
+     * @param key The key of the setting to create. It must not contain the tab (\t) character.
      * @param permissions The set of permissions associated with the setting.
      * @param defaultValue The default value of the setting. It will be copied to SettingsStorage memory.
      * @return SettingError_t The result of the operation.
@@ -333,7 +331,7 @@ public:
     /**
      * @brief This function updates the value of the setting with the provided key.
      * @param key The key of the setting to update.
-     * @param value The new value of the setting.
+     * @param value The new value of the setting. It must not contain the tab (\t) character.
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The setting was successfully updated.
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
@@ -386,6 +384,11 @@ public:
      * @retval INSUFFICIENT_BUFFER_SIZE_ERROR The outputValueBuffer is null or not big enough to store the value.
      */
     [[nodiscard]] SettingError_t getDefaultSettingAsString(const char* key, char* outputValueBuffer, size_t outputValueSize, SettingPermissions_t* outputPermissions = nullptr) const;
+
+    /**
+     * Disallow copying or moving the object.
+     */
+    SettingsStorage& operator=(SettingsStorage&&) = delete;
 
 private:
     typedef std::tuple<SettingPermissions_t, SettingPermissionsFilterMode_t, SettingsKeysList_t*> SettingsListCallbackData_t;
