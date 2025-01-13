@@ -2360,6 +2360,30 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageMisplacedNewLine)
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result);
 }
 
+TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidRealValue)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.2j3\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r3024992554\n");
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result);
+}
+
+TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidIntValue)
+{
+    NEW_POPULATED_SETTINGS_T(settings);
+    SettingsStorage::SettingError_t result;
+    SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45.7\nmenu2/setting3\t2\tstring3\n\r3375632971\n");
+
+    SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
+
+    ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, result);
+}
+
 TEST(SettingsStorage, storeSettingsFromPersistentStorageValidVolatile)
 {
     NEW_POPULATED_SETTINGS_T(settings);
