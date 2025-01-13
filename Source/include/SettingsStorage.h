@@ -5,6 +5,7 @@
 #include "OSShim.h"
 #include "SettingsFile.h"
 #include "libartcpp.h"
+#include "CRC.h"
 #include "list"
 
 #warning "TODO: ADD readers/writers exclusion mechanism" // TODO: ADD readers/writers exclusion mechanism
@@ -388,6 +389,7 @@ public:
 
 private:
     typedef std::tuple<SettingPermissions_t, SettingPermissionsFilterMode_t, SettingsKeysList_t*> SettingsListCallbackData_t;
+    typedef std::tuple<SettingsFile*, uint32_t*, bool*, CRC::Table<unsigned, 32>*> SettingsStoreCallbackData_t;
     using TypeofSettingValue = enum { Value, DefaultValue };
 
     OSShim_Mutex* moduleConfigMutex;

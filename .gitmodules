@@ -10,3 +10,6 @@
 [submodule "Tests/LinuxOSShim"]
 	path = Tests/LinuxOSShim
 	url = git@github.com:vacmg/PMW-LinuxOSShim.git
+[submodule "Source/deps/CRCpp"]
+	path = Source/deps/CRCpp
+	url = https://github.com/d-bahr/CRCpp.git

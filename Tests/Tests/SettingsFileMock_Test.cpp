@@ -255,6 +255,21 @@ TEST(SettingsFileMock, ReadLineOk)
     EXPECT_STREQ(expected_internalBuffer, buffer);
 }
 
+TEST(SettingsFileMock, ReadLineOkNewLine)
+{
+    const char* expected_internalBuffer = "internal buffer\n";
+
+    SettingsFileMock settingsFileMock(expected_internalBuffer);
+
+    SettingsFile::SettingsFileResult expected_result = SettingsFile::Success;
+    settingsFileMock.openForRead();
+    char buffer[100];
+    SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
+
+    EXPECT_EQ(expected_result, result);
+    EXPECT_STREQ(expected_internalBuffer, buffer);
+}
+
 TEST(SettingsFileMock, ReadLineFailFromConstructor)
 {
     const char* expected_internalBuffer = "internal buffer";
@@ -295,7 +310,7 @@ TEST(SettingsFileMock, ReadLineFailFromEndOfFile)
     SettingsFile::SettingsFileResult result = settingsFileMock.readLine(buffer, 100);
 
     EXPECT_EQ(expected_result, result);
-    EXPECT_STREQ("internal buffer", buffer);
+    EXPECT_STREQ("internal buffer\n", buffer);
 
     result = settingsFileMock.readLine(buffer, 100);
 

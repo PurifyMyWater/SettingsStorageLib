@@ -2,7 +2,7 @@
 #include <cstring>
 #include <format>
 
-#include "crc.h"
+#define CRCPP_USE_CPP11
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
 SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs) { return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) | static_cast<std::byte>(rhs)); }
@@ -154,14 +154,24 @@ SettingsStorage::SettingError_t SettingsStorage::restoreDefaultSettings(const ch
 
 SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorage() const
 {
-
     SettingsFile::SettingsFileResult res = settingsFile->openForWrite();
     if (res != SettingsFile::Success)
     {
         return SETTINGS_FILESYSTEM_ERROR;
     }
 
-    res = static_cast<SettingsFile::SettingsFileResult>(settings->iterateOverAll(storeSettingsInPersistentStorageCallback, settingsFile));
+    uint32_t crc32;
+    bool firstSetting = true;
+    CRC::Table<unsigned, 32> crcTable = CRC::CRC_32().MakeTable();
+    SettingsStoreCallbackData_t callbackData = std::make_tuple(settingsFile, &crc32, &firstSetting, &crcTable);
+    res = static_cast<SettingsFile::SettingsFileResult>(settings->iterateOverAll(storeSettingsInPersistentStorageCallback, &callbackData));
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    std::string formattedString = std::format("\t{}\n", crc32);
+    res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
     if (res != SettingsFile::Success)
     {
         return SETTINGS_FILESYSTEM_ERROR;
@@ -177,7 +187,71 @@ SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorag
 
 SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() const
 {
+    uint32_t expectedCrc32 = 0;
+    uint32_t computedCrc32 = 0;
+    auto crcTable = CRC::CRC_32().MakeTable();
+
     SettingsFile::SettingsFileResult res = settingsFile->openForRead();
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    bool firstSetting = true;
+    while (res == SettingsFile::Success)
+    {
+        char settingStr[MAX_KEY_SIZE + MAX_STR_FMT_VALUE_SIZE];
+        res = settingsFile->readLine(settingStr, MAX_KEY_SIZE);
+
+        if (res == SettingsFile::EndOfFile)
+        {
+            break;
+        }
+
+        if (settingStr[0] == '\t')
+        {
+            char* end;
+            expectedCrc32 = std::strtol(&settingStr[1], &end, 10);
+            if (*end != '\n')
+            {
+                res = settingsFile->close();
+                return SETTINGS_FILESYSTEM_ERROR;
+            }
+        }
+        else
+        {
+            if (firstSetting)
+            {
+                computedCrc32 = CRC::Calculate(settingStr, strlen(settingStr), crcTable);
+                firstSetting = false;
+            }
+            else
+            {
+                computedCrc32 = CRC::Calculate(settingStr, strlen(settingStr), crcTable, computedCrc32);
+            }
+        }
+    }
+
+    if (res != SettingsFile::EndOfFile)
+    {
+        res = settingsFile->close();
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    res = settingsFile->close();
+    if (res != SettingsFile::Success)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    if (expectedCrc32 != computedCrc32)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    bool errorWhileLoading = true;
+
+    res = settingsFile->openForRead();
     if (res != SettingsFile::Success)
     {
         return SETTINGS_FILESYSTEM_ERROR;
@@ -187,8 +261,9 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         char settingStr[MAX_KEY_SIZE + MAX_STR_FMT_VALUE_SIZE];
         res = settingsFile->readLine(settingStr, MAX_KEY_SIZE);
 
-        if (res == SettingsFile::EndOfFile)
+        if (res == SettingsFile::EndOfFile || settingStr[0] == '\t')
         {
+            errorWhileLoading = false;
             break;
         }
 
@@ -305,7 +380,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         }
     }
 
-    if (res != SettingsFile::EndOfFile)
+    if (errorWhileLoading)
     {
         res = settingsFile->close();
         return SETTINGS_FILESYSTEM_ERROR;
@@ -379,8 +454,23 @@ int SettingsStorage::freeSettingValuesCallback([[maybe_unused]] void* data, [[ma
 
 int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
 {
-    auto* settingsFile = static_cast<SettingsFile*>(data);
+    auto* callbackData = static_cast<SettingsStoreCallbackData_t*>(data);
     auto const* settingValue = static_cast<SettingValue_t* const>(value);
+
+    SettingsFile* settingsFile = std::get<0>(*callbackData);
+    uint32_t* settingsCRC32 = std::get<1>(*callbackData);
+    bool* firstSetting = std::get<2>(*callbackData);
+    CRC::Table<unsigned, 32>* crcTable = std::get<3>(*callbackData);
+
+    if (*firstSetting)
+    {
+        *firstSetting = false;
+        *settingsCRC32 = CRC::Calculate(key, key_len, *crcTable);
+    }
+    else
+    {
+        *settingsCRC32 = CRC::Calculate(key, key_len, *crcTable, *settingsCRC32);
+    }
 
     SettingsFile::SettingsFileResult res = settingsFile->write(reinterpret_cast<const char*>(key), key_len);
     if (res != SettingsFile::Success)
@@ -390,6 +480,8 @@ int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const 
 
     {
         const std::string formattedString = std::format("\t{}\t", static_cast<uint8_t>(settingValue->settingValueType));
+
+        *settingsCRC32 = CRC::Calculate(formattedString.c_str(), formattedString.size(), *crcTable, *settingsCRC32);
         res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
         if (res != SettingsFile::Success)
         {
@@ -402,18 +494,24 @@ int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const 
         case REAL:
         {
             std::string formattedString = std::format("{:.{}g}\n", settingValue->settingValueData.real, std::numeric_limits<double>::max_digits10);
+
+            *settingsCRC32 = CRC::Calculate(formattedString.c_str(), formattedString.size(), *crcTable, *settingsCRC32);
             res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
             break;
         }
         case INTEGER:
         {
             std::string formattedString = std::format("{}\n", settingValue->settingValueData.integer);
+
+            *settingsCRC32 = CRC::Calculate(formattedString.c_str(), formattedString.size(), *crcTable, *settingsCRC32);
             res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
             break;
         }
         case STRING:
         {
             std::string formattedString = std::format("{}\n", settingValue->settingValueData.string);
+
+            *settingsCRC32 = CRC::Calculate(formattedString.c_str(), formattedString.size(), *crcTable, *settingsCRC32);
             res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
             break;
         }

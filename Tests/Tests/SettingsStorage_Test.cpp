@@ -3,7 +3,7 @@
 #include "SettingsFileMock.h"
 #include "gtest/gtest.h"
 
-constexpr char defaultSettingsFile[] = "menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n";
+constexpr char defaultSettingsFile[] = "menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\t1874197929\n";
 constexpr int64_t defaultSettingsFileSize = sizeof(defaultSettingsFile) + 5000;
 
 void menu1RegisterSettigsCallback(SettingsStorage& settingsStorage)
@@ -282,9 +282,6 @@ TEST(SettingsStorage, DisablePersistentStorage)
     SettingsStorage::SettingError_t result;
     SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
-
-    settingsFileMock->_setForceMockMode(true);
-    settingsFileMock->_setOpenForReadResult(SettingsFile::Success); // FIXME this is a temporary mock of loadSettingsFromPersistentStorage
 
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
@@ -2193,7 +2190,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageValidVolatile)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsStorage::SettingError_t result;
     SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
-    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n");
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\t1874197929\n");
 
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
@@ -2260,11 +2257,13 @@ TEST(SettingsStorage, storeSettingsFromPersistentStorageValidVolatile)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsStorage::SettingError_t result;
     SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
-    SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\t1874197929\n", -1);
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+
     EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.storeSettingsInPersistentStorage());
-    EXPECT_STREQ("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n", settingsFileMock->_getInternalBuffer());
+    EXPECT_STREQ("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\t1874197929\n", settingsFileMock->_getInternalBuffer());
 
     SettingsStorage::SettingsKeysList_t outputKeys;
     EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, MatchSettingsWithAnyPermissionsListed, outputKeys));
@@ -2289,8 +2288,10 @@ TEST(SettingsStorage, storeSettingsFromPersistentStorageValidNoVolatile)
 {
     NEW_POPULATED_SETTINGS_STORAGE;
 
+    EXPECT_EQ(SettingsStorage::NO_ERROR, result);
+
     EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.storeSettingsInPersistentStorage());
-    EXPECT_STREQ("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n", settingsFileMock->_getInternalBuffer());
+    EXPECT_STREQ("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\t1874197929\n", settingsFileMock->_getInternalBuffer());
 
     SettingsStorage::SettingsKeysList_t outputKeys;
     EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, ExcludeSettingsWithAnyPermissionsListed, outputKeys));
