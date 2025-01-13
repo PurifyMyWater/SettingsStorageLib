@@ -170,7 +170,7 @@ SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorag
         return SETTINGS_FILESYSTEM_ERROR;
     }
 
-    std::string formattedString = std::format("\t{}\n", crc32);
+    std::string formattedString = std::format("\r{}\n", crc32);
     res = settingsFile->write(formattedString.c_str(), static_cast<uint32_t>(formattedString.size()));
     if (res != SettingsFile::Success)
     {
@@ -208,7 +208,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
             break;
         }
 
-        if (settingStr[0] == '\t')
+        if (settingStr[0] == '\r')
         {
             char* end;
             expectedCrc32 = std::strtol(&settingStr[1], &end, 10);
@@ -261,7 +261,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         char settingStr[MAX_KEY_SIZE + MAX_STR_FMT_VALUE_SIZE];
         res = settingsFile->readLine(settingStr, MAX_KEY_SIZE);
 
-        if (res == SettingsFile::EndOfFile || settingStr[0] == '\t')
+        if (res == SettingsFile::EndOfFile || settingStr[0] == '\r')
         {
             errorWhileLoading = false;
             break;
