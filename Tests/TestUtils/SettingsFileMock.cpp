@@ -127,7 +127,7 @@ SettingsFile::SettingsFileResult SettingsFileMock::write(const std::string& data
         return InvalidState;
     }
 
-    for (const char i : data)
+    for (const char i: data)
     {
         if (this->fileDataIndex >= this->internalBufferSize - 1)
         {
