@@ -460,9 +460,14 @@ int SettingsStorage::freeSettingValuesCallback([[maybe_unused]] void* data, [[ma
 
 int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
 {
-    // TODO exclude volatile settings from being stored
     auto* callbackData = static_cast<SettingsStoreCallbackData_t*>(data);
     auto const* settingValue = static_cast<SettingValue_t* const>(value);
+
+    // If the setting is volatile, it should not be stored in the persistent storage.
+    if (static_cast<bool>(settingValue->settingPermissions & SettingPermissions_t::VOLATILE))
+    {
+        return SettingsFile::Success;
+    }
 
     SettingsFile* settingsFile = std::get<0>(*callbackData);
     uint32_t* settingsCRC32 = std::get<1>(*callbackData);

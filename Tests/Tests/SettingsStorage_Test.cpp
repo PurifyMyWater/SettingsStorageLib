@@ -2449,7 +2449,9 @@ TEST(SettingsStorage, storeSettingsFromPersistentStorageValidVolatile)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsStorage::SettingError_t result;
     SettingsStorage::RegisterSettingsCallbackList_t registerSettingsCallbackList;
-    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r1874197929\n", -1);
+    registerSettingsCallbackList.push_back(menu1RegisterSettigsCallback);
+    registerSettingsCallbackList.push_back(menu2RegisterSettigsCallback);
+    SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\nmenu3/setting4\t2\tstring4\n\r802044068\n", -1);
     SettingsStorage settingsStorage(result, linuxOSShim, registerSettingsCallbackList, settingsFileMock);
 
     EXPECT_EQ(SettingsStorage::NO_ERROR, result);
@@ -2461,16 +2463,9 @@ TEST(SettingsStorage, storeSettingsFromPersistentStorageValidVolatile)
     EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage.listSettingsKeys("", SettingPermissions_t::VOLATILE, MatchSettingsWithAnyPermissionsListed, outputKeys));
 
     auto it = outputKeys.begin();
-    ASSERT_NE(outputKeys.end(), it);
-    EXPECT_STREQ("menu1/setting1", it->c_str());
-    ++it;
 
     ASSERT_NE(outputKeys.end(), it);
-    EXPECT_STREQ("menu1/setting2", it->c_str());
-    ++it;
-
-    ASSERT_NE(outputKeys.end(), it);
-    EXPECT_STREQ("menu2/setting3", it->c_str());
+    EXPECT_STREQ("menu3/setting4", it->c_str());
     ++it;
 
     ASSERT_EQ(outputKeys.end(), it);
