@@ -400,6 +400,7 @@ private:
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     static int freeSettingValuesCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     static int storeSettingsInPersistentStorageCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
+    [[nodiscard]] SettingError_t validateChecksum() const;
 
     SettingError_t getSettingValue(const char* key, SettingValue_t*& outputValue) const;
     [[nodiscard]] SettingError_t getSettingValueAsInt(TypeofSettingValue type, const char* key, int64_t& outputValue, SettingPermissions_t* outputPermissions = nullptr) const;

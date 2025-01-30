@@ -186,13 +186,13 @@ SettingsStorage::SettingError_t SettingsStorage::storeSettingsInPersistentStorag
     return NO_ERROR;
 }
 
-SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() const
+SettingsStorage::SettingError_t SettingsStorage::validateChecksum() const
 {
     uint32_t expectedCrc32 = 0;
     uint32_t computedCrc32 = 0;
-    auto crcTable = CRC::CRC_32().MakeTable();
+    const auto crcTable = CRC::CRC_32().MakeTable();
 
-    [[maybe_unused]] SettingsFile::SettingsFileResult res = settingsFile->openForRead();
+    SettingsFile::SettingsFileResult res = settingsFile->openForRead();
     if (res != SettingsFile::Success)
     {
         return SETTINGS_FILESYSTEM_ERROR;
@@ -249,8 +249,17 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
     {
         return SETTINGS_FILESYSTEM_ERROR;
     }
+    return NO_ERROR;
+}
 
-    res = settingsFile->openForRead();
+SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStorage() const
+{
+    if (const SettingError_t result = validateChecksum(); result != NO_ERROR)
+    {
+        return SETTINGS_FILESYSTEM_ERROR;
+    }
+
+    SettingsFile::SettingsFileResult res = settingsFile->openForRead();
     if (res != SettingsFile::Success)
     {
         return SETTINGS_FILESYSTEM_ERROR;
@@ -301,14 +310,14 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
             res = settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
-        SettingValueType_t valueType = static_cast<SettingValueType_t>(data);
+        const auto valueType = static_cast<SettingValueType_t>(data);
         SettingError_t settingError;
 
-        switch (valueType)
+        switch (static_cast<uint8_t>(valueType))
         {
             case REAL:
             {
-                double realValue = std::strtod(valueStr.c_str(), &end);
+                const double realValue = std::strtod(valueStr.c_str(), &end);
                 if (*end != '\0')
                 {
                     res = settingsFile->close();
@@ -335,7 +344,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
             break;
             case INTEGER:
             {
-                int64_t integerValue = std::strtoll(valueStr.c_str(), &end, 10);
+                const int64_t integerValue = std::strtoll(valueStr.c_str(), &end, 10);
                 if (*end != '\0')
                 {
                     res = settingsFile->close();
