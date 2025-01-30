@@ -15,7 +15,7 @@ void menu1RegisterSettigsCallback(SettingsStorage& settingsStorage)
 void menu2RegisterSettigsCallback(SettingsStorage& settingsStorage) { settingsStorage.addSettingAsString("menu2/setting3", SettingPermissions_t::USER, "string3"); }
 
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
-    SettingsStorage::Settings_t(name);                                                                                                                                                                 \
+    SettingsStorage::Settings_t(name){linuxOSShim};                                                                                                                                                    \
     double _real1_default = 1.23;                                                                                                                                                                      \
     SettingsStorage::SettingValue_t _valueSetting1 = {.settingValueType = SettingsStorage::SettingValueType_t::REAL,                                                                                   \
                                                       .settingValueData = {.real = 1.23},                                                                                                              \
