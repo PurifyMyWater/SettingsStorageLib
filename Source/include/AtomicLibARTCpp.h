@@ -7,9 +7,9 @@
 extern const uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS; // Defined in SettingsStorage.cpp
 
 /**
- * @brief A C++ wrapper for the ART library
+ * @brief A C++ wrapper for the ART library with atomic operations
  * It can store pointers to types of template typename ValueType
- * The user is responsable for the memory management of the values stored in the tree
+ * The user is responsable for the memory management of the values stored in the tree.
  */
 template<typename ValueType>
 class AtomicAdaptiveRadixTree : public AdaptiveRadixTree<ValueType>
@@ -81,25 +81,25 @@ public:
 
     /**
      * Iterates through the entries pairs in the map,
-     * invoking a callback for each. The call back gets a
-     * key, value for each and returns an integer stop value.
+     * invoking a callback for each.
+     * The callback gets a key value for each and returns an integer stop value.
      * If the callback returns non-zero, then the iteration stops.
      * @param cb The callback function to invoke
      * @param data Opaque handle passed to the callback
-     * @return 0 on success, or the return of the callback.
+     * @return Zero on success, or the return of the callback.
      */
     int iterateOverAll(art_callback cb, void* data);
 
     /**
-     * Iterates through the entries pairs in the map,
+     * Iterates through the entry pairs in the map,
      * invoking a callback for each that matches a given prefix.
-     * The call back gets a key, value for each and returns an integer stop value.
+     * The callback gets a key value for each and returns an integer stop value.
      * If the callback returns non-zero, then the iteration stops.
      * @param prefix The prefix of keys to read
      * @param prefix_len The length of the prefix
      * @param cb The callback function to invoke
      * @param data Opaque handle passed to the callback
-     * @return 0 on success, or the return of the callback.
+     * @return Zero on success, or the return of the callback.
      */
     int iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data);
 
