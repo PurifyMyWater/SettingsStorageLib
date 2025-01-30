@@ -1,23 +1,19 @@
 #ifndef SETTINGSSTORAGE_SETTINGS_H
 #define SETTINGSSTORAGE_SETTINGS_H
 
+#define CRCPP_USE_CPP11
+
 #include <string>
+#include "AtomicLibARTCpp.h"
 #include "CRC.h"
 #include "OSShim.h"
 #include "SettingsFile.h"
-#include "libartcpp.h"
 #include "list"
-
-#warning "TODO: ADD readers/writers exclusion mechanism" // TODO: ADD readers/writers exclusion mechanism
-
-// TODO Separate exclusion mechanism from the SettingsStorage class to a child class. (including moduleConfigMutex)
-constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
 constexpr size_t PERMISSION_STRING_SIZE = 34;
 
 /**
  * @brief The permissions that can be granted to a setting.
- *
  *
  * The permissions are stored in a bitfield, where each bit represents a permission.
  * If a bit is set in a flag position, it means that the permission is granted, and if the bit is cleared, the permission is not granted.
@@ -119,7 +115,7 @@ public:
     constexpr static const char* const COMPONENT_TAG = "PurifyMyWater - SettingsStorage";
 
     /// The data structure used internally to store the settings.
-    typedef AdaptiveRadixTree<SettingValue_t> Settings_t;
+    typedef AtomicAdaptiveRadixTree<SettingValue_t> Settings_t;
 
     /**
      * @brief Build a new Settings Storage object.

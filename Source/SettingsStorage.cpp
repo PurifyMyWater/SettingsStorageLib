@@ -3,7 +3,7 @@
 #include <format>
 #include <sstream>
 
-#define CRCPP_USE_CPP11
+const uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
 SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs) { return static_cast<SettingPermissions_t>(static_cast<std::byte>(lhs) | static_cast<std::byte>(rhs)); }
@@ -62,7 +62,7 @@ SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const R
     assert(this->moduleConfigMutex != nullptr && "Mutex creation failed");
 
     this->persistentStorageEnabled = false;
-    this->settings = new Settings_t();
+    this->settings = new Settings_t(osShim);
 
     for (auto& callback: registerSettingsCallbackList)
     {
