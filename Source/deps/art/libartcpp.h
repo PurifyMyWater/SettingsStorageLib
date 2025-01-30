@@ -21,30 +21,99 @@ public:
     /**
      * @brief Destroy the Adaptive Radix Tree object
      */
-    ~AdaptiveRadixTree();
+    virtual ~AdaptiveRadixTree();
 
     /**
      * Disallow copying or moving the object.
      */
     AdaptiveRadixTree& operator=(AdaptiveRadixTree&&) = delete;
 
-    uint64_t size();
+    /**
+     * @brief Get the size of the tree
+     *
+     * @return uint64_t size
+     */
+    virtual uint64_t size();
 
-    ValueType* insert(const char* key, int key_len, ValueType* value);
+    /**
+     * @brief Insert a new value into the art tree
+     *
+     * @param key The key
+     * @param key_len The length of the key
+     * @param value opaque value.
+     * @return Null if the item was newly inserted, otherwise
+     * the old value pointer is returned.
+     */
+    virtual ValueType* insert(const char* key, int key_len, ValueType* value);
 
-    ValueType* insertIfNotExists(const char* key, int key_len, ValueType* value);
+    /**
+     * @brief Insert a new value into the art tree (no replace)
+     *
+     * @param key The key
+     * @param key_len The length of the key
+     * @param value opaque value.
+     * @return Null if the item was newly inserted, otherwise
+     * the old value pointer is returned.
+     */
+    virtual ValueType* insertIfNotExists(const char* key, int key_len, ValueType* value);
 
-    ValueType* deleteValue(const char* key, int key_len);
+    /**
+     * @brief Searches for a value in the ART tree
+     *
+     * @param key The key
+     * @param key_len The length of the key
+     * @return NULL if the item was not found, otherwise
+     * the value pointer is returned.
+     */
+    virtual ValueType* deleteValue(const char* key, int key_len);
 
-    ValueType* search(const char* key, int key_len);
+    /**
+     * @brief Searches for a value in the ART tree
+     *
+     * @param key The key
+     * @param key_len The length of the key
+     * @return NULL if the item was not found, otherwise
+     * the value pointer is returned.
+     */
+    virtual ValueType* search(const char* key, int key_len);
 
-    int iterateOverAll(art_callback cb, void* data);
+    /**
+     * Iterates through the entries pairs in the map,
+     * invoking a callback for each.
+     * The callback gets a key value for each and returns an integer stop value.
+     * If the callback returns non-zero, then the iteration stops.
+     * @param cb The callback function to invoke
+     * @param data Opaque handle passed to the callback
+     * @return Zero on success, or the return of the callback.
+     */
+    virtual int iterateOverAll(art_callback cb, void* data);
 
-    int iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data);
+    /**
+     * Iterates through the entry pairs in the map,
+     * invoking a callback for each that matches a given prefix.
+     * The callback gets a key value for each and returns an integer stop value.
+     * If the callback returns non-zero, then the iteration stops.
+     * @param prefix The prefix of keys to read
+     * @param prefix_len The length of the prefix
+     * @param cb The callback function to invoke
+     * @param data Opaque handle passed to the callback
+     * @return Zero on success, or the return of the callback.
+     */
+    virtual int iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data);
 
-    ValueType* getMinimumValue();
+    /**
+     * @brief Returns the minimum valued leaf value in the tree
+     *
+     * @return The minimum leaf value or NULL
+     */
+    virtual ValueType* getMinimumValue();
 
-    ValueType* getMaximumValue();
+    /**
+     * @brief Returns the maximum valued leaf value in the tree
+     *
+     * @return The maximum leaf value or NULL
+     */
+    virtual ValueType* getMaximumValue();
 
 private:
     art_tree tree{};

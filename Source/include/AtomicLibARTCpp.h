@@ -35,7 +35,7 @@ public:
      *
      * @return uint64_t size
      */
-    uint64_t size();
+    uint64_t size() override;
 
     /**
      * @brief Insert a new value into the art tree
@@ -46,7 +46,7 @@ public:
      * @return Null if the item was newly inserted, otherwise
      * the old value pointer is returned.
      */
-    ValueType* insert(const char* key, int key_len, ValueType* value);
+    ValueType* insert(const char* key, int key_len, ValueType* value) override;
 
     /**
      * @brief Insert a new value into the art tree (no replace)
@@ -57,7 +57,7 @@ public:
      * @return Null if the item was newly inserted, otherwise
      * the old value pointer is returned.
      */
-    ValueType* insertIfNotExists(const char* key, int key_len, ValueType* value);
+    ValueType* insertIfNotExists(const char* key, int key_len, ValueType* value) override;
 
     /**
      * @brief Searches for a value in the ART tree
@@ -67,7 +67,7 @@ public:
      * @return NULL if the item was not found, otherwise
      * the value pointer is returned.
      */
-    ValueType* deleteValue(const char* key, int key_len);
+    ValueType* deleteValue(const char* key, int key_len) override;
 
     /**
      * @brief Searches for a value in the ART tree
@@ -77,7 +77,7 @@ public:
      * @return NULL if the item was not found, otherwise
      * the value pointer is returned.
      */
-    ValueType* search(const char* key, int key_len);
+    ValueType* search(const char* key, int key_len) override;
 
     /**
      * Iterates through the entries pairs in the map,
@@ -88,7 +88,7 @@ public:
      * @param data Opaque handle passed to the callback
      * @return Zero on success, or the return of the callback.
      */
-    int iterateOverAll(art_callback cb, void* data);
+    int iterateOverAll(art_callback cb, void* data) override;
 
     /**
      * Iterates through the entry pairs in the map,
@@ -101,21 +101,21 @@ public:
      * @param data Opaque handle passed to the callback
      * @return Zero on success, or the return of the callback.
      */
-    int iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data);
+    int iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data) override;
 
     /**
      * @brief Returns the minimum valued leaf value in the tree
      *
      * @return The minimum leaf value or NULL
      */
-    ValueType* getMinimumValue();
+    ValueType* getMinimumValue() override;
 
     /**
      * @brief Returns the maximum valued leaf value in the tree
      *
      * @return The maximum leaf value or NULL
      */
-    ValueType* getMaximumValue();
+    ValueType* getMaximumValue() override;
 
 private:
     [[nodiscard]] bool preWrite() const;
