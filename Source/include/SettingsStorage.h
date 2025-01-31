@@ -139,7 +139,7 @@ public:
     SettingsStorage(SettingError_t& result, OSShim& osShim, const RegisterSettingsCallbackList_t& registerSettingsCallbackList, SettingsFile* settingsFile = nullptr);
 
     /**
-     * @brief Destroy the Settings Storage object and free all the associated memory
+     * @brief Destroy the Settings Storage object and free all the associated memory.
      */
     ~SettingsStorage();
 
@@ -176,7 +176,6 @@ public:
     /**
      * @brief This function saves the settings to the persistent storage, replacing the old copy of them.
      *
-     * If delayed write is enabled, it will also cancel the timer if it is active.
      * If the persisten storage is disabled, it will do nothing and return SETTINGS_FILESYSTEM_ERROR.
      *
      * @return SettingError_t The result of the operation.
@@ -260,8 +259,6 @@ public:
      * @retval KEY_EXISTS_ERROR The setting with the provided key already exists.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
-     *
-     * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t addSettingAsInt(const char* key, SettingPermissions_t permissions, int64_t defaultValue) const;
 
@@ -275,8 +272,6 @@ public:
      * @retval KEY_EXISTS_ERROR The setting with the provided key already exists.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
-     *
-     * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t addSettingAsReal(const char* key, SettingPermissions_t permissions, double defaultValue) const;
 
@@ -291,8 +286,6 @@ public:
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
      * @retval INVALID_INPUT_ERROR The defaultValue is nullptr.
-     *
-     * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t addSettingAsString(const char* key, SettingPermissions_t permissions, const char* defaultValue) const;
 
@@ -305,8 +298,6 @@ public:
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type or void.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
-     *
-     * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t putSettingValueAsInt(const char* key, int64_t value) const;
 
@@ -319,8 +310,6 @@ public:
      * @retval KEY_NOT_FOUND_ERROR The setting with the provided key was not found.
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type or void.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
-     *
-     * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t putSettingValueAsReal(const char* key, double value) const;
 
@@ -334,8 +323,6 @@ public:
      * @retval TYPE_MISMATCH_ERROR The setting with the provided key is not of the expected type or void.
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval INVALID_INPUT_ERROR The value is nullptr.
-     *
-     * @note If delayed write is enabled, it will also start or reset the write timer.
      */
     [[nodiscard]] SettingError_t putSettingValueAsString(const char* key, const char* value) const;
 

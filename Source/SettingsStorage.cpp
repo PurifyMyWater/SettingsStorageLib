@@ -86,6 +86,11 @@ SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const R
 
 SettingsStorage::~SettingsStorage()
 {
+    if (this->settingsFile != nullptr)
+    {
+        settingsFile->forceClose();
+    }
+
     settings->iterateOverAll(freeSettingValuesCallback, nullptr);
 
     delete settings;

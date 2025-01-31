@@ -197,6 +197,11 @@ SettingsFile::SettingsFileResult SettingsFileMock::close()
     return Success;
 }
 
+void SettingsFileMock::forceClose()
+{
+    close();
+}
+
 SettingsFile::FileStatus SettingsFileMock::getOpenState() { return this->fileStatus; }
 
 char* SettingsFileMock::_getInternalBuffer() const { return this->internalBuffer; }

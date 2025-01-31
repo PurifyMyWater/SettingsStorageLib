@@ -1,7 +1,6 @@
 #ifndef SETTINGSFILE_H
 #define SETTINGSFILE_H
 
-#include <cstdint>
 #include <string>
 
 /**
@@ -56,6 +55,12 @@ public:
 
     /**
      * @brief Write a byte to the file.
+     *
+     * The actual writing to the file does not need to happen immediately,
+     * so delayed writing mechanisms can be implemented.
+     * The implementation must guarantee that the changes are saved to the file at least
+     * before opening for read again, if forceClose is called or if the destructor is called.
+     *
      * @param byte The byte to write to the file.
      * @return SettingsFileResult The result of the operation.
      * @retval Success The byte was successfully written.
@@ -66,6 +71,12 @@ public:
 
     /**
      * @brief Write a buffer to the file.
+     *
+     * The actual writing to the file does not need to happen immediately,
+     * so delayed writing mechanisms can be implemented.
+     * The implementation must guarantee that the changes are saved to the file at least
+     * before opening for read again, if forceClose is called or if the destructor is called.
+     *
      * @param data The buffer to write to the file.
      * @return SettingsFileResult The result of the operation.
      * @retval Success The buffer was successfully written.
@@ -80,13 +91,22 @@ public:
      * @retval Success The file was successfully closed.
      * @retval InvalidState The file is not open.
      */
-    [[nodiscard]] virtual SettingsFileResult close() = 0;
+    virtual SettingsFileResult close() = 0;
 
     /**
      * @brief Get the open state of the file.
      * @return FileStatus The open state of the file.
      */
     [[nodiscard]] virtual FileStatus getOpenState() = 0;
+
+    /**
+     * @brief Write to disk any pending data and close the file if opened.
+     * The main difference between close and forceClose is that this function is used
+     * to signal the SettingsFile implementation that the File must be closed and written to disk immediately.
+     * Whereas in the close function,
+     * it was possible for some implementations to delay the writing to disk reducing write cicles in some cases.
+     */
+    virtual void forceClose() = 0;
 
     virtual ~SettingsFile() = default;
 };

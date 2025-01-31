@@ -2,6 +2,7 @@
 #define SETTINGSFILEMOCK_H
 
 #include "SettingsFile.h"
+#include "cstdint"
 
 class SettingsFileMock : public SettingsFile
 {
@@ -21,6 +22,8 @@ public:
     SettingsFileResult openForWrite() override;
 
     SettingsFileResult close() override;
+
+    void forceClose() override;
 
     FileStatus getOpenState() override;
 
