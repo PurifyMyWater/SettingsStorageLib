@@ -220,7 +220,7 @@ SettingsStorage::SettingError_t SettingsStorage::validateChecksum() const
             expectedCrc32 = std::strtol(&settingStr[1], &end, 10);
             if (*end != '\n')
             {
-                res = settingsFile->close();
+                settingsFile->close();
                 return SETTINGS_FILESYSTEM_ERROR;
             }
         }
@@ -240,7 +240,7 @@ SettingsStorage::SettingError_t SettingsStorage::validateChecksum() const
 
     if (res != SettingsFile::EndOfFile)
     {
-        res = settingsFile->close();
+        settingsFile->close();
         return SETTINGS_FILESYSTEM_ERROR;
     }
 
@@ -288,7 +288,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         std::getline(iss, key, '\t');
         if (key.empty())
         {
-            res = settingsFile->close();
+            settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
 
@@ -296,7 +296,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         std::getline(iss, valueTypeStr, '\t');
         if (valueTypeStr.empty())
         {
-            res = settingsFile->close();
+            settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
 
@@ -304,7 +304,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         std::getline(iss, valueStr, '\n');
         if (valueStr.empty())
         {
-            res = settingsFile->close();
+            settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
 
@@ -312,7 +312,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
         long data = std::strtol(valueTypeStr.c_str(), &end, 10);
         if (*end != '\0' || data < 0 || data >= static_cast<uint8_t>(MAX_SETTING_VALUE_TYPE_ENUM))
         {
-            res = settingsFile->close();
+            settingsFile->close();
             return SETTINGS_FILESYSTEM_ERROR;
         }
         const auto valueType = static_cast<SettingValueType_t>(data);
@@ -325,7 +325,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                 const double realValue = std::strtod(valueStr.c_str(), &end);
                 if (*end != '\0')
                 {
-                    res = settingsFile->close();
+                    settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
 
@@ -336,13 +336,13 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     settingError = addSettingAsReal(key.c_str(), SettingPermissions_t::VOLATILE, realValue);
                     if (settingError != NO_ERROR)
                     {
-                        res = settingsFile->close();
+                        settingsFile->close();
                         return SETTINGS_FILESYSTEM_ERROR;
                     }
                 }
                 else if (settingError != NO_ERROR)
                 {
-                    res = settingsFile->close();
+                    settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
@@ -352,7 +352,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                 const int64_t integerValue = std::strtoll(valueStr.c_str(), &end, 10);
                 if (*end != '\0')
                 {
-                    res = settingsFile->close();
+                    settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
 
@@ -363,13 +363,13 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     settingError = addSettingAsInt(key.c_str(), SettingPermissions_t::VOLATILE, integerValue);
                     if (settingError != NO_ERROR)
                     {
-                        res = settingsFile->close();
+                        settingsFile->close();
                         return SETTINGS_FILESYSTEM_ERROR;
                     }
                 }
                 else if (settingError != NO_ERROR)
                 {
-                    res = settingsFile->close();
+                    settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
@@ -383,26 +383,26 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
                     settingError = addSettingAsString(key.c_str(), SettingPermissions_t::VOLATILE, valueStr.c_str());
                     if (settingError != NO_ERROR)
                     {
-                        res = settingsFile->close();
+                        settingsFile->close();
                         return SETTINGS_FILESYSTEM_ERROR;
                     }
                 }
                 else if (settingError != NO_ERROR)
                 {
-                    res = settingsFile->close();
+                    settingsFile->close();
                     return SETTINGS_FILESYSTEM_ERROR;
                 }
             }
             break;
             default:
-                res = settingsFile->close();
+                settingsFile->close();
                 return SETTINGS_FILESYSTEM_ERROR;
         }
     }
 
     if (res != SettingsFile::EndOfFile)
     {
-        res = settingsFile->close();
+        settingsFile->close();
         return SETTINGS_FILESYSTEM_ERROR;
     }
 
