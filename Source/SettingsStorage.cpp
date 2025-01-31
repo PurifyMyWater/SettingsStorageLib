@@ -75,7 +75,7 @@ SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const R
     this->settingsFile = settingsFile;
     if (settingsFile != nullptr)
     {
-        this->persistentStorageEnabled = true;
+        this->persistentStorageEnabled = !CONFIG_SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE;
         result = loadSettingsFromPersistentStorage();
         if (result != NO_ERROR)
         {

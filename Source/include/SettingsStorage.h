@@ -10,6 +10,10 @@
 #include "SettingsFile.h"
 #include "list"
 
+#ifndef CONFIG_SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE
+#define CONFIG_SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE false
+#endif
+
 constexpr size_t PERMISSION_STRING_SIZE = 34;
 
 /**
