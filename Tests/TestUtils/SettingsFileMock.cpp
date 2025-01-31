@@ -197,10 +197,7 @@ SettingsFile::SettingsFileResult SettingsFileMock::close()
     return Success;
 }
 
-void SettingsFileMock::forceClose()
-{
-    close();
-}
+void SettingsFileMock::forceClose() { close(); }
 
 SettingsFile::FileStatus SettingsFileMock::getOpenState() { return this->fileStatus; }
 
