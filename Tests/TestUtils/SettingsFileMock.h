@@ -8,6 +8,7 @@ class SettingsFileMock : public SettingsFile
 {
 public:
     explicit SettingsFileMock(const char* fileData, int64_t internalBufferSize = -1);
+    ~SettingsFileMock() override;
 
     SettingsFileResult read(char* byte) override;
 

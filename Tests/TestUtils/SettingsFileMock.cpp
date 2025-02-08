@@ -19,6 +19,8 @@ SettingsFileMock::SettingsFileMock(const char* internalBuffer, int64_t internalB
     else if (internalBufferSize >= this->internalBufferSize)
     {
         this->internalBuffer = static_cast<char*>(malloc(internalBufferSize));
+        assert(this->internalBuffer != nullptr && "Memory allocation failed");
+
         this->internalBufferSize = internalBufferSize;
         strcpy(this->internalBuffer, internalBuffer);
     }
@@ -41,6 +43,10 @@ SettingsFileMock::SettingsFileMock(const char* internalBuffer, int64_t internalB
     openForReadResult = Success;
     openForWriteResult = Success;
     closeResult = Success;
+}
+SettingsFileMock::~SettingsFileMock()
+{
+    free(this->internalBuffer);
 }
 
 SettingsFile::SettingsFileResult SettingsFileMock::read(char* byte)

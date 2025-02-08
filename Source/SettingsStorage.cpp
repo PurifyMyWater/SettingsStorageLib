@@ -217,7 +217,7 @@ SettingsStorage::SettingError_t SettingsStorage::validateChecksum() const
         if (settingStr[0] == '\r')
         {
             char* end;
-            expectedCrc32 = std::strtol(&settingStr[1], &end, 10);
+            expectedCrc32 = static_cast<uint32_t>(std::strtol(&settingStr[1], &end, 10));
             if (*end != '\n')
             {
                 settingsFile->close();
