@@ -44,10 +44,7 @@ SettingsFileMock::SettingsFileMock(const char* internalBuffer, int64_t internalB
     openForWriteResult = Success;
     closeResult = Success;
 }
-SettingsFileMock::~SettingsFileMock()
-{
-    free(this->internalBuffer);
-}
+SettingsFileMock::~SettingsFileMock() { free(this->internalBuffer); }
 
 SettingsFile::SettingsFileResult SettingsFileMock::read(char* byte)
 {

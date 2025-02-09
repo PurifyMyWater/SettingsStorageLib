@@ -420,7 +420,7 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
     SettingPermissions_t permissions = std::get<0>(*callbackData);
     SettingPermissionsFilterMode_t filterMode = std::get<1>(*callbackData);
     SettingsKeysList_t* outputKeys = std::get<2>(*callbackData);
-    auto const* settingValue = static_cast<SettingValue_t* const>(value);
+    auto* settingValue = static_cast<SettingValue_t*>(value);
 
     switch (filterMode)
     {
@@ -466,7 +466,7 @@ int SettingsStorage::listSettingsKeysCallback(void* data, const unsigned char* k
 
 int SettingsStorage::freeSettingValuesCallback([[maybe_unused]] void* data, [[maybe_unused]] const unsigned char* key, [[maybe_unused]] uint32_t key_len, void* value)
 {
-    auto const* settingValue = static_cast<SettingValue_t* const>(value);
+    auto* settingValue = static_cast<SettingValue_t*>(value);
     freeSettingValue(settingValue);
 
     return NO_ERROR;
@@ -475,7 +475,7 @@ int SettingsStorage::freeSettingValuesCallback([[maybe_unused]] void* data, [[ma
 int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const unsigned char* key, uint32_t key_len, void* value)
 {
     auto* callbackData = static_cast<SettingsStoreCallbackData_t*>(data);
-    auto const* settingValue = static_cast<SettingValue_t* const>(value);
+    auto* settingValue = static_cast<SettingValue_t*>(value);
 
     // If the setting is volatile, it should not be stored in the persistent storage.
     if (static_cast<bool>(settingValue->settingPermissions & SettingPermissions_t::VOLATILE))
