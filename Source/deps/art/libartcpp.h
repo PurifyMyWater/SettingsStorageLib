@@ -4,6 +4,12 @@
 #include <cassert>
 #include "art.h"
 
+#ifdef NDEBUG
+#define ASSERT_SAFE(expression, condition) expression
+#else
+#define ASSERT_SAFE(expression, condition) assert(expression  condition)
+#endif
+
 /**
  * @brief A C++ wrapper for the ART library
  * It can store pointers to types of template typename ValueType
@@ -122,15 +128,13 @@ private:
 template<typename ValueType>
 AdaptiveRadixTree<ValueType>::AdaptiveRadixTree()
 {
-    const int res = art_tree_init(&tree);
-    assert(res == 0);
+    ASSERT_SAFE(art_tree_init(&tree), == 0);
 }
 
 template<typename ValueType>
 AdaptiveRadixTree<ValueType>::~AdaptiveRadixTree()
 {
-    const int res = art_tree_destroy(&tree);
-    assert(res == 0);
+    ASSERT_SAFE(art_tree_destroy(&tree), == 0);
 }
 
 template<typename ValueType>

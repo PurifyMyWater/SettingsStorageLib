@@ -81,6 +81,7 @@ public:
     typedef enum
     {
         NO_ERROR = 0,
+        FATAL_ERROR,
         KEY_NOT_FOUND_ERROR,
         TYPE_MISMATCH_ERROR,
         KEY_EXISTS_ERROR,
@@ -138,6 +139,7 @@ public:
      *
      * @retval NO_ERROR The settings were successfully loaded.
      * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted, and the settings were not loaded.
+     * @retval FATAL_ERROR It wasn't possible to create the settings storage object.
      * Instead, the settings have been set to default values.
      */
     SettingsStorage(SettingError_t& result, OSShim& osShim, const RegisterSettingsCallbackList_t& registerSettingsCallbackList, SettingsFile* settingsFile = nullptr);
