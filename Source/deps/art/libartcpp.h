@@ -119,20 +119,18 @@ private:
     art_tree tree{};
 };
 
-#ifdef NDEBUG
-#error "TODO: Extract the logic from the assert macros to avoid expanding it to none in release builds." // TODO Extract the logic from the assert macros to avoid expanding it to none in release builds.
-#endif
-
 template<typename ValueType>
 AdaptiveRadixTree<ValueType>::AdaptiveRadixTree()
 {
-    assert(art_tree_init(&tree) == 0);
+    const int res = art_tree_init(&tree);
+    assert(res == 0);
 }
 
 template<typename ValueType>
 AdaptiveRadixTree<ValueType>::~AdaptiveRadixTree()
 {
-    assert(art_tree_destroy(&tree) == 0);
+    const int res = art_tree_destroy(&tree);
+    assert(res == 0);
 }
 
 template<typename ValueType>
