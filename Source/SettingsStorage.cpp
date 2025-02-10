@@ -79,7 +79,10 @@ SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const R
         result = loadSettingsFromPersistentStorage();
         if (result != NO_ERROR)
         {
-            assert(NO_ERROR == restoreDefaultSettings(""));
+            if (restoreDefaultSettings("") != NO_ERROR)
+            {
+                result = FATAL_ERROR;
+            }
         }
     }
 }
