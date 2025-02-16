@@ -67,14 +67,7 @@ bool validatePermissions(SettingPermissions_t permissions);
 class SettingsStorage
 {
 public:
-    /** Callback function that registers the settings of a component.
-     * Each component must register all their settings keys, and their default values using addSettingAs* functions.
-     **/
-    using RegisterSettingsCallback_t = void (*)(SettingsStorage& settingsStorage);
-
-    /// The list of callback functions that register the settings of a component. It will be called from the constructor.
-    using RegisterSettingsCallbackList_t = std::list<RegisterSettingsCallback_t>;
-
+    /// List of keys that match the provided key prefix.
     using SettingsKeysList_t = std::list<std::string>;
 
     /// Enum that stores the possible errors returned by the SettingsStorage API.
@@ -123,26 +116,13 @@ public:
     typedef AtomicAdaptiveRadixTree<SettingValue_t> Settings_t;
 
     /**
-     * @brief Build a new Settings Storage object.
-     * It will register the settings of the components using the provided callback list
-     * and then load the setting's values from the persistent storage.
+     * @brief Build a new empty Settings Storage object.
      *
-     * @note If there are settings in the settingsFile that are not registered by the components,
-     * they will be loaded but marked as volatile,
-     * which means they will not be saved in the persistent storage.
-     *
-     * @param result The result of the operation.
      * @param osShim The OS shim object that will be used to interact with the OS.
-     * @param registerSettingsCallbackList The list of callback functions that register the settings of a component.
      * @param settingsFile The settings file object that will be used to interact with the settings file.
      * If it is nullptr, the settings will not be saved in the persistent storage.
-     *
-     * @retval NO_ERROR The settings were successfully loaded.
-     * @retval SETTINGS_FILESYSTEM_ERROR The settings filesystem is corrupted, and the settings were not loaded.
-     * @retval FATAL_ERROR It wasn't possible to create the settings storage object.
-     * Instead, the settings have been set to default values.
      */
-    SettingsStorage(SettingError_t& result, OSShim& osShim, const RegisterSettingsCallbackList_t& registerSettingsCallbackList, SettingsFile* settingsFile = nullptr);
+    explicit SettingsStorage(OSShim& osShim, SettingsFile* settingsFile = nullptr);
 
     /**
      * @brief Destroy the Settings Storage object and free all the associated memory.
@@ -182,7 +162,8 @@ public:
     /**
      * @brief This function saves the settings to the persistent storage, replacing the old copy of them.
      *
-     * If the persisten storage is disabled, it will do nothing and return SETTINGS_FILESYSTEM_ERROR.
+     * @note If there are settings in the settingsStorage that are marked as volatile,
+     * they will not be saved in the persistent storage.
      *
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The settings were successfully saved.
@@ -192,7 +173,12 @@ public:
     [[nodiscard]] SettingError_t storeSettingsInPersistentStorage() const;
 
     /**
-     * @brief This function loads the settings from the persistent storage, replacing the old copy ot them.
+     * @brief This function loads the settings from the persistent storage, replacing the old copy of them.
+     *
+     * @note If there are settings in the settingsFile that are not registered by the components,
+     * they will be loaded but marked as volatile,
+     * which means they will not be saved in the persistent storage.
+     *
      * @return SettingError_t The result of the operation.
      * @retval NO_ERROR The settings were successfully loaded.
      * @retval SETTINGS_FILESYSTEM_ERROR The settings file is corrupted and settings were not modified.
@@ -266,7 +252,7 @@ public:
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
      */
-    [[nodiscard]] SettingError_t addSettingAsInt(const char* key, SettingPermissions_t permissions, int64_t defaultValue) const;
+    [[nodiscard]] SettingError_t registerSettingAsInt(const char* key, SettingPermissions_t permissions, int64_t defaultValue) const;
 
     /**
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
@@ -279,7 +265,7 @@ public:
      * @retval INVALID_INPUT_ERROR The key is nullptr or "".
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
      */
-    [[nodiscard]] SettingError_t addSettingAsReal(const char* key, SettingPermissions_t permissions, double defaultValue) const;
+    [[nodiscard]] SettingError_t registerSettingAsReal(const char* key, SettingPermissions_t permissions, double defaultValue) const;
 
     /**
      * @brief This function creates an empty setting located at the specified path, with the provided permissions.
@@ -293,7 +279,7 @@ public:
      * @retval INVALID_INPUT_ERROR The permissions are invalid.
      * @retval INVALID_INPUT_ERROR The defaultValue is nullptr.
      */
-    [[nodiscard]] SettingError_t addSettingAsString(const char* key, SettingPermissions_t permissions, const char* defaultValue) const;
+    [[nodiscard]] SettingError_t registerSettingAsString(const char* key, SettingPermissions_t permissions, const char* defaultValue) const;
 
     /**
      * @brief This function updates the value of the setting with the provided key.

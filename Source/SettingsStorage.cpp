@@ -54,9 +54,8 @@ const char* settingPermissionToString(const SettingPermissions_t permission, cha
 }
 
 
-SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const RegisterSettingsCallbackList_t& registerSettingsCallbackList, SettingsFile* settingsFile)
+SettingsStorage::SettingsStorage(OSShim& osShim, SettingsFile* settingsFile)
 {
-    result = NO_ERROR;
     this->osShim = &osShim;
     this->moduleConfigMutex = osShim.osCreateMutex();
     assert(this->moduleConfigMutex != nullptr && "Mutex creation failed");
@@ -64,26 +63,10 @@ SettingsStorage::SettingsStorage(SettingError_t& result, OSShim& osShim, const R
     this->persistentStorageEnabled = false;
     this->settings = new Settings_t(osShim);
 
-    for (auto& callback: registerSettingsCallbackList)
-    {
-        if (callback != nullptr)
-        {
-            callback(*this);
-        }
-    }
-
     this->settingsFile = settingsFile;
     if (settingsFile != nullptr)
     {
         this->persistentStorageEnabled = !CONFIG_SETTINGS_STORAGE_FORCE_DISABLE_PERSISTENT_STORAGE;
-        result = loadSettingsFromPersistentStorage();
-        if (result != NO_ERROR)
-        {
-            if (restoreDefaultSettings("") != NO_ERROR)
-            {
-                result = FATAL_ERROR;
-            }
-        }
     }
 }
 
@@ -336,7 +319,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
 
                 if (settingError == KEY_NOT_FOUND_ERROR)
                 {
-                    settingError = addSettingAsReal(key.c_str(), SettingPermissions_t::VOLATILE, realValue);
+                    settingError = registerSettingAsReal(key.c_str(), SettingPermissions_t::VOLATILE, realValue);
                     if (settingError != NO_ERROR)
                     {
                         settingsFile->close();
@@ -363,7 +346,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
 
                 if (settingError == KEY_NOT_FOUND_ERROR)
                 {
-                    settingError = addSettingAsInt(key.c_str(), SettingPermissions_t::VOLATILE, integerValue);
+                    settingError = registerSettingAsInt(key.c_str(), SettingPermissions_t::VOLATILE, integerValue);
                     if (settingError != NO_ERROR)
                     {
                         settingsFile->close();
@@ -383,7 +366,7 @@ SettingsStorage::SettingError_t SettingsStorage::loadSettingsFromPersistentStora
 
                 if (settingError == KEY_NOT_FOUND_ERROR)
                 {
-                    settingError = addSettingAsString(key.c_str(), SettingPermissions_t::VOLATILE, valueStr.c_str());
+                    settingError = registerSettingAsString(key.c_str(), SettingPermissions_t::VOLATILE, valueStr.c_str());
                     if (settingError != NO_ERROR)
                     {
                         settingsFile->close();
@@ -583,7 +566,7 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingAsString(const char* 
     return getSettingValueAsString(Value, key, outputValueBuffer, outputValueSize, outputPermissions);
 }
 
-SettingsStorage::SettingError_t SettingsStorage::addSettingAsInt(const char* key, const SettingPermissions_t permissions, const int64_t defaultValue) const
+SettingsStorage::SettingError_t SettingsStorage::registerSettingAsInt(const char* key, const SettingPermissions_t permissions, const int64_t defaultValue) const
 {
     if (key == nullptr || key[0] == '\0' || !validatePermissions(permissions))
     {
@@ -603,7 +586,7 @@ SettingsStorage::SettingError_t SettingsStorage::addSettingAsInt(const char* key
     return NO_ERROR;
 }
 
-SettingsStorage::SettingError_t SettingsStorage::addSettingAsReal(const char* key, const SettingPermissions_t permissions, const double defaultValue) const
+SettingsStorage::SettingError_t SettingsStorage::registerSettingAsReal(const char* key, const SettingPermissions_t permissions, const double defaultValue) const
 {
     if (key == nullptr || key[0] == '\0' || !validatePermissions(permissions))
     {
@@ -623,7 +606,7 @@ SettingsStorage::SettingError_t SettingsStorage::addSettingAsReal(const char* ke
     return NO_ERROR;
 }
 
-SettingsStorage::SettingError_t SettingsStorage::addSettingAsString(const char* key, const SettingPermissions_t permissions, const char* defaultValue) const
+SettingsStorage::SettingError_t SettingsStorage::registerSettingAsString(const char* key, const SettingPermissions_t permissions, const char* defaultValue) const
 {
     if (key == nullptr || key[0] == '\0' || !validatePermissions(permissions) || defaultValue == nullptr)
     {
