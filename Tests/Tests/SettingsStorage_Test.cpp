@@ -31,7 +31,7 @@ int populateSettingsCallback(void* data, const unsigned char* key, uint32_t key_
 }
 
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
-    SettingsStorage::Settings_t(name){linuxOSInterface};                                                                                                                                                    \
+    SettingsStorage::Settings_t(name){linuxOSInterface};                                                                                                                                               \
     double _real1_default = 1.23;                                                                                                                                                                      \
     SettingsStorage::SettingValue_t _valueSetting1 = {.settingValueType = SettingsStorage::SettingValueType_t::REAL,                                                                                   \
                                                       .settingValueData = {.real = 1.23},                                                                                                              \
@@ -60,7 +60,7 @@ int populateSettingsCallback(void* data, const unsigned char* key, uint32_t key_
     NEW_POPULATED_SETTINGS_T(settings);                                                                                                                                                                \
     SettingsStorage::SettingError_t result;                                                                                                                                                            \
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);                                                                                           \
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);                                                                                                             \
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);                                                                                                        \
     {                                                                                                                                                                                                  \
         settings.iterateOverAll(populateSettingsCallback, settingsStorage);                                                                                                                            \
     }
