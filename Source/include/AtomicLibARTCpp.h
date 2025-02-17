@@ -1,7 +1,7 @@
 #ifndef ATOMICLIBARTCPP_H
 #define ATOMICLIBARTCPP_H
 
-#include "OSShim.h"
+#include "OSInterface.h"
 #include "libartcpp.h"
 
 extern const uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS; // Defined in SettingsStorage.cpp
@@ -18,7 +18,7 @@ public:
     /**
      * @brief Construct a new Adaptive Radix Tree object
      */
-    explicit AtomicAdaptiveRadixTree(OSShim& osShim);
+    explicit AtomicAdaptiveRadixTree(OSInterface& osShim);
 
     /**
      * @brief Destroy the Adaptive Radix Tree object
@@ -122,15 +122,15 @@ private:
     void postWrite() const;
     [[nodiscard]] bool preRead();
     void postRead();
-    OSShim* osShim;
-    OSShim_BinarySemaphore* empty;
-    OSShim_BinarySemaphore* turn;
-    OSShim_Mutex* readersMutex;
+    OSInterface* osShim;
+    OSInterface_BinarySemaphore* empty;
+    OSInterface_BinarySemaphore* turn;
+    OSInterface_Mutex* readersMutex;
     uint32_t readers;
 };
 
 template<typename ValueType>
-AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSShim& osShim) : AdaptiveRadixTree<ValueType>()
+AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSInterface& osShim) : AdaptiveRadixTree<ValueType>()
 {
     this->readers = 0;
     this->osShim = &osShim;
