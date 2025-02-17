@@ -17,20 +17,12 @@ on:
 jobs:
     Build:
         runs-on: ubuntu-latest
+        env:
+            GH_PAT: ${{ secrets.PMW_CI_PAT }}
 
         steps:
-            -   name: Cache git submodules
-                uses: actions/cache@v4
-                with:
-                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
-                    path: ".git"
-                    restore-keys: "${{ runner.os }}-git-main"
-
             -   name: "Checkout repository"
                 uses: actions/checkout@v4
-                with:
-                    submodules: 'recursive'
-                    token: ${{ secrets.SubmoduleToken }}
 
             -   name: Cache Build Environment
                 id: CacheBuildEnvironment
@@ -56,18 +48,8 @@ jobs:
         needs: Build
 
         steps:
-            -   name: Restore cached git submodules
-                uses: actions/cache/restore@v4
-                with:
-                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
-                    path: ".git"
-                    restore-keys: "${{ runner.os }}-git-main"
-
             -   name: "Checkout repository"
                 uses: actions/checkout@v4
-                with:
-                    submodules: 'recursive'
-                    token: ${{ secrets.SubmoduleToken }}
 
             -   name: Restore cached build environment
                 uses: actions/cache/restore@v4
@@ -98,18 +80,8 @@ jobs:
             -   name: Install Valgrind tool
                 run: sudo apt-get update && sudo apt-get install -y valgrind
 
-            -   name: Restore cached git submodules
-                uses: actions/cache/restore@v4
-                with:
-                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
-                    path: ".git"
-                    restore-keys: "${{ runner.os }}-git-main"
-
             -   name: "Checkout repository"
                 uses: actions/checkout@v4
-                with:
-                    submodules: 'recursive'
-                    token: ${{ secrets.SubmoduleToken }}
 
             -   name: Restore cached build environment
                 uses: actions/cache/restore@v4
@@ -129,24 +101,16 @@ jobs:
     Linter:
         runs-on: ubuntu-latest
         needs: Build
+        env:
+            GH_PAT: ${{ secrets.PMW_CI_PAT }}
 
         permissions:
             contents: write
             pull-requests: write
 
         steps:
-            -   name: Restore cached git submodules
-                uses: actions/cache/restore@v4
-                with:
-                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
-                    path: ".git"
-                    restore-keys: "${{ runner.os }}-git-main"
-
             -   name: "Checkout repository"
                 uses: actions/checkout@v4
-                with:
-                    submodules: 'recursive'
-                    token: ${{ secrets.SubmoduleToken }}
 
             -   name: Configure CMake
                 working-directory: ${{ runner.workspace }}
@@ -186,6 +150,7 @@ jobs:
             - Valgrind
         env:
             BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+            GH_PAT: ${{ secrets.PMW_CI_PAT }}
         steps:
             -   name: Restore cached Coverage Report
                 uses: actions/cache/restore@v4
@@ -201,18 +166,9 @@ jobs:
                     path: '${{runner.workspace}}/valgrind.xml'
                     fail-on-cache-miss: true
 
-            -   name: Restore cached git submodules
-                uses: actions/cache/restore@v4
-                with:
-                    key: "${{ runner.os }}-git-${{ github.ref_name }}"
-                    path: ".git"
-                    restore-keys: "${{ runner.os }}-git-main"
-
             -   name: "Checkout repository"
                 uses: actions/checkout@v4
                 with:
-                    submodules: 'recursive'
-                    token: ${{ secrets.SubmoduleToken }}
                     fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis.
 
             -   name: Install Sonar Build Wrapper
