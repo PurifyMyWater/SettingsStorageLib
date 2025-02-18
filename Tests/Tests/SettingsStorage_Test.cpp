@@ -1,5 +1,5 @@
 #include "SettingsStorage.h"
-#include "LinuxOSShim.h"
+#include "LinuxOSInterface.h"
 #include "SettingsFileMock.h"
 #include "gtest/gtest.h"
 
@@ -31,7 +31,7 @@ int populateSettingsCallback(void* data, const unsigned char* key, uint32_t key_
 }
 
 #define NEW_POPULATED_SETTINGS_T(name)                                                                                                                                                                 \
-    SettingsStorage::Settings_t(name){linuxOSShim};                                                                                                                                                    \
+    SettingsStorage::Settings_t(name){linuxOSInterface};                                                                                                                                               \
     double _real1_default = 1.23;                                                                                                                                                                      \
     SettingsStorage::SettingValue_t _valueSetting1 = {.settingValueType = SettingsStorage::SettingValueType_t::REAL,                                                                                   \
                                                       .settingValueData = {.real = 1.23},                                                                                                              \
@@ -60,7 +60,7 @@ int populateSettingsCallback(void* data, const unsigned char* key, uint32_t key_
     NEW_POPULATED_SETTINGS_T(settings);                                                                                                                                                                \
     SettingsStorage::SettingError_t result;                                                                                                                                                            \
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);                                                                                           \
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);                                                                                                             \
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);                                                                                                        \
     {                                                                                                                                                                                                  \
         settings.iterateOverAll(populateSettingsCallback, settingsStorage);                                                                                                                            \
     }
@@ -70,7 +70,7 @@ int populateSettingsCallback(void* data, const unsigned char* key, uint32_t key_
     delete settingsFileMock;                                                                                                                                                                           \
     TEAR_DOWN_NEW_POPULATED_SETTINGS_T
 
-static LinuxOSShim linuxOSShim;
+static LinuxOSInterface linuxOSInterface;
 
 TEST(SettingPermissions, OperatorOr)
 {
@@ -217,7 +217,7 @@ TEST(SettingsStorage, ConstructorPersistent)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     EXPECT_EQ(SettingsFile::FileClosed, settingsFileMock->getOpenState());
     EXPECT_TRUE(settingsStorage->isPersistentStorageEnabled());
@@ -231,7 +231,7 @@ TEST(SettingsStorage, ConstructorNonPersistent)
 {
     NEW_POPULATED_SETTINGS_T(settings);
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface);
 
     EXPECT_FALSE(settingsStorage->isPersistentStorageEnabled());
 
@@ -244,7 +244,7 @@ TEST(SettingsStorage, Destructor)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     EXPECT_TRUE(settingsStorage->isPersistentStorageEnabled());
 
@@ -260,7 +260,7 @@ TEST(SettingsStorage, DisablePersistentStorage)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock(defaultSettingsFile, defaultSettingsFileSize);
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     // When
     ASSERT_TRUE(settingsStorage->disablePersistentStorage());
@@ -2361,7 +2361,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageValidVolatile)
     NEW_POPULATED_SETTINGS_T(settings);
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r1874197929\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     EXPECT_EQ(SettingsStorage::NO_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2433,7 +2433,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidEndNewLine)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r1874197929");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2448,7 +2448,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageNoCRC)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2463,7 +2463,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageNoCRC2)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\n\r");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2478,7 +2478,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidCRC)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\n\r1874197929\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2493,7 +2493,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageDataAfterCRC)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\n\r1048123282\nmenu2/setting1\t0\t19.234\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2508,7 +2508,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidFormatOneTab)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting10\t1.23\n\r3431848188\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2524,7 +2524,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidFormatOneTab2)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t01.23\n\r3523440152\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2540,7 +2540,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidFormatNoTab)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting101.23\n\r1154240075\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2556,7 +2556,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageNoNewLine)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\r403323339\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2572,7 +2572,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageMisplacedNewLine)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.2\n3\n\r403323339\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2588,7 +2588,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidRealValue)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.2j3\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r3024992554\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2604,7 +2604,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidIntValue)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45.7\nmenu2/setting3\t2\tstring3\n\r3375632971\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2620,7 +2620,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidValueTypeNum)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t3\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r3588291006\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2636,7 +2636,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidValueTypeNegativeN
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t-1\t45\nmenu2/setting3\t2\tstring3\n\r1361869624\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2652,7 +2652,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidValueTypeChar)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\tl\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\n\r1759725303\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2668,7 +2668,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidValueTypeStringAsR
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t0\tstring3\n\r1799368084\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2684,7 +2684,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidKeyReal)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t0\tstring3\n\r1141571301\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2700,7 +2700,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidKeyInt)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\n\t1\t45\nmenu2/setting3\t0\tstring3\n\r1061568119\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2716,7 +2716,7 @@ TEST(SettingsStorage, loadSettingsFromPersistentStorageInvalidKeyString)
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\n\t0\tstring3\n\r664071405\n");
 
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     ASSERT_EQ(SettingsStorage::SETTINGS_FILESYSTEM_ERROR, settingsStorage->loadSettingsFromPersistentStorage());
 
@@ -2730,7 +2730,7 @@ TEST(SettingsStorage, storeSettingsFromPersistentStorageValidVolatile)
     NEW_POPULATED_SETTINGS_T(settings);
 
     SettingsFileMock* settingsFileMock = new SettingsFileMock("menu1/setting1\t0\t1.23\nmenu1/setting2\t1\t45\nmenu2/setting3\t2\tstring3\nmenu3/setting4\t2\tstring4\n\r802044068\n", -1);
-    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSShim, settingsFileMock);
+    SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
     {
         settings.iterateOverAll(populateSettingsCallback, settingsStorage);

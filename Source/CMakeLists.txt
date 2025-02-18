@@ -1,8 +1,28 @@
 add_library(SettingsStorageLib STATIC)
 
+include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
+
+if(DEFINED ENV{GITHUB_ACTION})
+    set(GIT_REPO https://vacmg:$ENV{GH_PAT}@github.com/vacmg/OSInterface.git)
+else()
+    set(GIT_REPO git@github.com:vacmg/OSInterface.git)
+endif()
+
+FetchContent_Declare(
+        CRCpp
+        GIT_REPOSITORY  https://github.com/d-bahr/CRCpp.git
+        GIT_TAG         master
+)
+FetchContent_Declare(
+        OSInterface
+        GIT_REPOSITORY  ${GIT_REPO}
+        GIT_TAG         main
+)
+FetchContent_MakeAvailable(CRCpp)
+FetchContent_MakeAvailable(OSInterface)
+
 add_subdirectory(deps/art)
-add_subdirectory(deps/OSShim)
-add_subdirectory(deps/CRCpp)
 
 file(GLOB SettingsStorageLib_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 target_sources(SettingsStorageLib PRIVATE ${SettingsStorageLib_SOURCES})
@@ -10,4 +30,4 @@ target_include_directories(SettingsStorageLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_compile_options(SettingsStorageLib PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 # Link the sub-libraries to the combined library
-target_link_libraries(SettingsStorageLib PUBLIC libartcpp OSShim CRCpp)
+target_link_libraries(SettingsStorageLib PUBLIC libartcpp OSInterface CRCpp)

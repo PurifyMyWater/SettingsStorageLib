@@ -54,14 +54,14 @@ const char* settingPermissionToString(const SettingPermissions_t permission, cha
 }
 
 
-SettingsStorage::SettingsStorage(OSShim& osShim, SettingsFile* settingsFile)
+SettingsStorage::SettingsStorage(OSInterface& osInterface, SettingsFile* settingsFile)
 {
-    this->osShim = &osShim;
-    this->moduleConfigMutex = osShim.osCreateMutex();
+    this->osInterface = &osInterface;
+    this->moduleConfigMutex = osInterface.osCreateMutex();
     assert(this->moduleConfigMutex != nullptr && "Mutex creation failed");
 
     this->persistentStorageEnabled = false;
-    this->settings = new Settings_t(osShim);
+    this->settings = new Settings_t(osInterface);
 
     this->settingsFile = settingsFile;
     if (settingsFile != nullptr)

@@ -6,7 +6,7 @@
 #include <string>
 #include "AtomicLibARTCpp.h"
 #include "CRC.h"
-#include "OSShim.h"
+#include "OSInterface.h"
 #include "SettingsFile.h"
 #include "list"
 
@@ -118,11 +118,11 @@ public:
     /**
      * @brief Build a new empty Settings Storage object.
      *
-     * @param osShim The OS shim object that will be used to interact with the OS.
+     * @param osInterface The OS shim object that will be used to interact with the OS.
      * @param settingsFile The settings file object that will be used to interact with the settings file.
      * If it is nullptr, the settings will not be saved in the persistent storage.
      */
-    explicit SettingsStorage(OSShim& osShim, SettingsFile* settingsFile = nullptr);
+    explicit SettingsStorage(OSInterface& osInterface, SettingsFile* settingsFile = nullptr);
 
     /**
      * @brief Destroy the Settings Storage object and free all the associated memory.
@@ -370,11 +370,11 @@ private:
     typedef std::tuple<SettingsFile*, uint32_t*, bool*, CRC::Table<unsigned, 32>*> SettingsStoreCallbackData_t;
     using TypeofSettingValue = enum { Value, DefaultValue };
 
-    OSShim_Mutex* moduleConfigMutex;
+    OSInterface_Mutex* moduleConfigMutex;
     SettingsFile* settingsFile;
     bool persistentStorageEnabled;
     Settings_t* settings;
-    OSShim* osShim;
+    OSInterface* osInterface;
 
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     static int freeSettingValuesCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
