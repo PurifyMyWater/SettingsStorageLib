@@ -118,11 +118,11 @@ public:
     /**
      * @brief Build a new empty Settings Storage object.
      *
-     * @param osShim The OS shim object that will be used to interact with the OS.
+     * @param osInterface The OS shim object that will be used to interact with the OS.
      * @param settingsFile The settings file object that will be used to interact with the settings file.
      * If it is nullptr, the settings will not be saved in the persistent storage.
      */
-    explicit SettingsStorage(OSInterface& osShim, SettingsFile* settingsFile = nullptr);
+    explicit SettingsStorage(OSInterface& osInterface, SettingsFile* settingsFile = nullptr);
 
     /**
      * @brief Destroy the Settings Storage object and free all the associated memory.
@@ -374,7 +374,7 @@ private:
     SettingsFile* settingsFile;
     bool persistentStorageEnabled;
     Settings_t* settings;
-    OSInterface* osShim;
+    OSInterface* osInterface;
 
     static int listSettingsKeysCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);
     static int freeSettingValuesCallback(void* data, const unsigned char* key, uint32_t key_len, void* value);

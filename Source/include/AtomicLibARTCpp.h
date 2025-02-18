@@ -18,7 +18,7 @@ public:
     /**
      * @brief Construct a new Adaptive Radix Tree object
      */
-    explicit AtomicAdaptiveRadixTree(OSInterface& osShim);
+    explicit AtomicAdaptiveRadixTree(OSInterface& osInterface);
 
     /**
      * @brief Destroy the Adaptive Radix Tree object
@@ -122,7 +122,7 @@ private:
     void postWrite() const;
     [[nodiscard]] bool preRead();
     void postRead();
-    OSInterface* osShim;
+    OSInterface* osInterface;
     OSInterface_BinarySemaphore* empty;
     OSInterface_BinarySemaphore* turn;
     OSInterface_Mutex* readersMutex;
@@ -130,15 +130,15 @@ private:
 };
 
 template<typename ValueType>
-AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSInterface& osShim) : AdaptiveRadixTree<ValueType>()
+AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSInterface& osInterface) : AdaptiveRadixTree<ValueType>()
 {
     this->readers = 0;
-    this->osShim = &osShim;
-    this->empty = osShim.osCreateBinarySemaphore();
+    this->osInterface = &osInterface;
+    this->empty = osInterface.osCreateBinarySemaphore();
     assert(this->empty != nullptr && "Semaphore creation failed");
-    this->turn = osShim.osCreateBinarySemaphore();
+    this->turn = osInterface.osCreateBinarySemaphore();
     assert(this->turn != nullptr && "Semaphore creation failed");
-    this->readersMutex = osShim.osCreateMutex();
+    this->readersMutex = osInterface.osCreateMutex();
     assert(this->readersMutex != nullptr && "Mutex creation failed");
 
     // The semaphores are initialized to 0, so a signal is needed to allow the first reader/writer to access the tree.
