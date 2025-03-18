@@ -3,7 +3,7 @@
 #include <format>
 #include <sstream>
 
-const uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
+constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS = 100;
 
 // This operator overload allows the enum SettingPermissions_t to have a bitwise OR operator.
 SettingPermissions_t operator|(SettingPermissions_t lhs, SettingPermissions_t rhs)
@@ -564,7 +564,7 @@ SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char*   
     }
 
     SettingsListCallbackData_t callbackData = std::make_tuple(permissions, filterMode, &outputKeys);
-    int res = settings->iterateOverPrefix(keyPrefix, static_cast<int>(strlen(keyPrefix)), listSettingsKeysCallback,
+    int res = settings->iterateOverPrefix(keyPrefix, static_cast<int>(strnlen(keyPrefix, MAX_SETTING_KEY_SIZE)), listSettingsKeysCallback,
                                           &callbackData);
     return static_cast<SettingError_t>(res);
 }
@@ -602,7 +602,7 @@ SettingsStorage::SettingError_t SettingsStorage::registerSettingAsInt(const char
     newValue->settingValueType                = INTEGER;
     newValue->settingValueData.integer        = defaultValue;
     newValue->settingDefaultValueData.integer = defaultValue;
-    if (this->settings->insertIfNotExists(key, static_cast<int>(strlen(key)), newValue) != nullptr)
+    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) != nullptr)
     {
         delete newValue;
         return KEY_EXISTS_ERROR;
@@ -624,7 +624,7 @@ SettingsStorage::SettingError_t SettingsStorage::registerSettingAsReal(const cha
     newValue->settingValueType             = REAL;
     newValue->settingValueData.real        = defaultValue;
     newValue->settingDefaultValueData.real = defaultValue;
-    if (this->settings->insertIfNotExists(key, static_cast<int>(strlen(key)), newValue) != nullptr)
+    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) != nullptr)
     {
         delete newValue;
         return KEY_EXISTS_ERROR;
@@ -647,7 +647,7 @@ SettingsStorage::SettingError_t SettingsStorage::registerSettingAsString(const c
     newValue->settingValueData.string        = strdup(defaultValue);
     newValue->settingDefaultValueData.string = strdup(defaultValue);
 
-    if (this->settings->insertIfNotExists(key, static_cast<int>(strlen(key)), newValue) != nullptr)
+    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) != nullptr)
     {
         free(newValue->settingValueData.string);
         free(newValue->settingDefaultValueData.string);
@@ -752,7 +752,7 @@ SettingsStorage::SettingError_t SettingsStorage::getSettingValue(const char* key
         return INVALID_INPUT_ERROR;
     }
 
-    outputValue = this->settings->search(key, static_cast<int>(strlen(key)));
+    outputValue = this->settings->search(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)));
     if (outputValue == nullptr)
     {
         return KEY_NOT_FOUND_ERROR;

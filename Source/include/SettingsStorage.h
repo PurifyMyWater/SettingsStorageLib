@@ -15,6 +15,7 @@
 #endif
 
 constexpr size_t PERMISSION_STRING_SIZE = 34;
+constexpr size_t MAX_SETTING_KEY_SIZE   = 128;
 
 /**
  * @brief The permissions that can be granted to a setting.
