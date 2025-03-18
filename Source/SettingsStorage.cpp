@@ -564,8 +564,8 @@ SettingsStorage::SettingError_t SettingsStorage::listSettingsKeys(const char*   
     }
 
     SettingsListCallbackData_t callbackData = std::make_tuple(permissions, filterMode, &outputKeys);
-    int res = settings->iterateOverPrefix(keyPrefix, static_cast<int>(strnlen(keyPrefix, MAX_SETTING_KEY_SIZE)), listSettingsKeysCallback,
-                                          &callbackData);
+    int res = settings->iterateOverPrefix(keyPrefix, static_cast<int>(strnlen(keyPrefix, MAX_SETTING_KEY_SIZE)),
+                                          listSettingsKeysCallback, &callbackData);
     return static_cast<SettingError_t>(res);
 }
 
@@ -602,7 +602,8 @@ SettingsStorage::SettingError_t SettingsStorage::registerSettingAsInt(const char
     newValue->settingValueType                = INTEGER;
     newValue->settingValueData.integer        = defaultValue;
     newValue->settingDefaultValueData.integer = defaultValue;
-    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) != nullptr)
+    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) !=
+        nullptr)
     {
         delete newValue;
         return KEY_EXISTS_ERROR;
@@ -624,7 +625,8 @@ SettingsStorage::SettingError_t SettingsStorage::registerSettingAsReal(const cha
     newValue->settingValueType             = REAL;
     newValue->settingValueData.real        = defaultValue;
     newValue->settingDefaultValueData.real = defaultValue;
-    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) != nullptr)
+    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) !=
+        nullptr)
     {
         delete newValue;
         return KEY_EXISTS_ERROR;
@@ -647,7 +649,8 @@ SettingsStorage::SettingError_t SettingsStorage::registerSettingAsString(const c
     newValue->settingValueData.string        = strdup(defaultValue);
     newValue->settingDefaultValueData.string = strdup(defaultValue);
 
-    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) != nullptr)
+    if (this->settings->insertIfNotExists(key, static_cast<int>(strnlen(key, MAX_SETTING_KEY_SIZE)), newValue) !=
+        nullptr)
     {
         free(newValue->settingValueData.string);
         free(newValue->settingDefaultValueData.string);
