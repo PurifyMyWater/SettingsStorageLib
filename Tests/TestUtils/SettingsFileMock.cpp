@@ -1,7 +1,3 @@
-//
-// Created by victor on 8/01/25.
-//
-
 #include "SettingsFileMock.h"
 
 #include <cassert>
@@ -29,22 +25,25 @@ SettingsFileMock::SettingsFileMock(const char* internalBuffer, int64_t internalB
         assert(false && "Too small internal buffer size");
     }
     assert(this->internalBuffer != nullptr && "Memory allocation failed");
-    this->fileDataSize = static_cast<uint32_t>(strlen(internalBuffer));
+    this->fileDataSize  = static_cast<uint32_t>(strlen(internalBuffer));
     this->fileDataIndex = 0;
-    this->fileStatus = FileClosed;
+    this->fileStatus    = FileClosed;
 
     fullMockEnabled = false;
-    readResult = Success;
-    readOutput = 'a';
-    readLineResult = Success;
+    readResult      = Success;
+    readOutput      = 'a';
+    readLineResult  = Success;
     strcpy(readLineOutput, "a");
-    writeResult = Success;
-    writeBufferResult = Success;
-    openForReadResult = Success;
+    writeResult        = Success;
+    writeBufferResult  = Success;
+    openForReadResult  = Success;
     openForWriteResult = Success;
-    closeResult = Success;
+    closeResult        = Success;
 }
-SettingsFileMock::~SettingsFileMock() { free(this->internalBuffer); }
+SettingsFileMock::~SettingsFileMock()
+{
+    free(this->internalBuffer);
+}
 
 SettingsFile::SettingsFileResult SettingsFileMock::read(char* byte)
 {
@@ -113,7 +112,7 @@ SettingsFile::SettingsFileResult SettingsFileMock::write(char byte)
     }
 
     this->internalBuffer[this->fileDataIndex++] = byte;
-    this->internalBuffer[this->fileDataIndex] = '\0';
+    this->internalBuffer[this->fileDataIndex]   = '\0';
 
     return Success;
 }
@@ -130,7 +129,7 @@ SettingsFile::SettingsFileResult SettingsFileMock::write(const std::string& data
         return InvalidState;
     }
 
-    for (const char i: data)
+    for (const char i : data)
     {
         if (this->fileDataIndex >= this->internalBufferSize - 1)
         {
@@ -156,9 +155,9 @@ SettingsFile::SettingsFileResult SettingsFileMock::openForRead()
         return InvalidState;
     }
 
-    this->fileStatus = FileOpenedForRead;
+    this->fileStatus    = FileOpenedForRead;
     this->fileDataIndex = 0;
-    this->fileDataSize = static_cast<uint32_t>(strlen(this->internalBuffer));
+    this->fileDataSize  = static_cast<uint32_t>(strlen(this->internalBuffer));
     return Success;
 }
 
@@ -174,8 +173,8 @@ SettingsFile::SettingsFileResult SettingsFileMock::openForWrite()
         return InvalidState;
     }
 
-    this->fileStatus = FileOpenedForWrite;
-    this->fileDataIndex = 0;
+    this->fileStatus                          = FileOpenedForWrite;
+    this->fileDataIndex                       = 0;
     this->internalBuffer[this->fileDataIndex] = '\0';
     return Success;
 }
@@ -200,28 +199,67 @@ SettingsFile::SettingsFileResult SettingsFileMock::close()
     return Success;
 }
 
-void SettingsFileMock::forceClose() { close(); }
+void SettingsFileMock::forceClose()
+{
+    close();
+}
 
-SettingsFile::FileStatus SettingsFileMock::getOpenState() { return this->fileStatus; }
+SettingsFile::FileStatus SettingsFileMock::getOpenState()
+{
+    return this->fileStatus;
+}
 
-char* SettingsFileMock::_getInternalBuffer() const { return this->internalBuffer; }
+char* SettingsFileMock::_getInternalBuffer() const
+{
+    return this->internalBuffer;
+}
 
-void SettingsFileMock::_setForceMockMode(bool fullMockEnabled) { this->fullMockEnabled = fullMockEnabled; }
+void SettingsFileMock::_setForceMockMode(bool fullMockEnabled)
+{
+    this->fullMockEnabled = fullMockEnabled;
+}
 
-void SettingsFileMock::_setReadResult(SettingsFileResult result) { this->readResult = result; }
+void SettingsFileMock::_setReadResult(SettingsFileResult result)
+{
+    this->readResult = result;
+}
 
-void SettingsFileMock::_setReadOutput(char byte) { this->readOutput = byte; }
+void SettingsFileMock::_setReadOutput(char byte)
+{
+    this->readOutput = byte;
+}
 
-void SettingsFileMock::_setReadLineResult(SettingsFileResult result) { this->readLineResult = result; }
+void SettingsFileMock::_setReadLineResult(SettingsFileResult result)
+{
+    this->readLineResult = result;
+}
 
-void SettingsFileMock::_setReadLineOutput(const char* line) { strcpy(this->readLineOutput, line); }
+void SettingsFileMock::_setReadLineOutput(const char* line)
+{
+    strcpy(this->readLineOutput, line);
+}
 
-void SettingsFileMock::_setWriteResult(SettingsFileResult result) { this->writeResult = result; }
+void SettingsFileMock::_setWriteResult(SettingsFileResult result)
+{
+    this->writeResult = result;
+}
 
-void SettingsFileMock::_setWriteBufferResult(SettingsFileResult result) { this->writeBufferResult = result; }
+void SettingsFileMock::_setWriteBufferResult(SettingsFileResult result)
+{
+    this->writeBufferResult = result;
+}
 
-void SettingsFileMock::_setOpenForReadResult(SettingsFileResult result) { this->openForReadResult = result; }
+void SettingsFileMock::_setOpenForReadResult(SettingsFileResult result)
+{
+    this->openForReadResult = result;
+}
 
-void SettingsFileMock::_setOpenForWriteResult(SettingsFileResult result) { this->openForWriteResult = result; }
+void SettingsFileMock::_setOpenForWriteResult(SettingsFileResult result)
+{
+    this->openForWriteResult = result;
+}
 
-void SettingsFileMock::_setCloseResult(SettingsFileResult result) { this->closeResult = result; }
+void SettingsFileMock::_setCloseResult(SettingsFileResult result)
+{
+    this->closeResult = result;
+}
