@@ -4,7 +4,7 @@
 #include "OSInterface.h"
 #include "libartcpp.h"
 
-extern constexpr uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS; // Defined in SettingsStorage.cpp
+extern const uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS; // Defined in SettingsStorage.cpp
 
 /**
  * @brief A C++ wrapper for the ART library with atomic operations
