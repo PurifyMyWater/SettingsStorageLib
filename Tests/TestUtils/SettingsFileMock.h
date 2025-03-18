@@ -47,17 +47,17 @@ public:
     void _setCloseResult(SettingsFileResult result);
 
 private:
-    char* internalBuffer;
-    uint32_t fileDataSize;
-    uint32_t fileDataIndex;
+    char*      internalBuffer;
+    uint32_t   fileDataSize;
+    uint32_t   fileDataIndex;
     FileStatus fileStatus;
-    uint32_t internalBufferSize;
+    uint32_t   internalBufferSize;
 
-    bool fullMockEnabled;
+    bool               fullMockEnabled;
     SettingsFileResult readResult;
-    char readOutput;
+    char               readOutput;
     SettingsFileResult readLineResult;
-    char readLineOutput[1024]{};
+    char               readLineOutput[1024]{};
     SettingsFileResult writeResult;
     SettingsFileResult writeBufferResult;
     SettingsFileResult openForReadResult;

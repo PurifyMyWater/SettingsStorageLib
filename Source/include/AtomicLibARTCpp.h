@@ -11,8 +11,7 @@ extern const uint32_t SETTINGS_STORAGE_MUTEX_TIMEOUT_MS; // Defined in SettingsS
  * It can store pointers to types of template typename ValueType
  * The user is responsable for the memory management of the values stored in the tree.
  */
-template<typename ValueType>
-class AtomicAdaptiveRadixTree : public AdaptiveRadixTree<ValueType>
+template <typename ValueType> class AtomicAdaptiveRadixTree : public AdaptiveRadixTree<ValueType>
 {
 public:
     /**
@@ -118,23 +117,23 @@ public:
     ValueType* getMaximumValue() override;
 
 private:
-    [[nodiscard]] bool preWrite() const;
-    void postWrite() const;
-    [[nodiscard]] bool preRead();
-    void postRead();
-    OSInterface* osInterface;
+    [[nodiscard]] bool           preWrite() const;
+    void                         postWrite() const;
+    [[nodiscard]] bool           preRead();
+    void                         postRead();
+    OSInterface*                 osInterface;
     OSInterface_BinarySemaphore* empty;
     OSInterface_BinarySemaphore* turn;
-    OSInterface_Mutex* readersMutex;
-    uint32_t readers;
+    OSInterface_Mutex*           readersMutex;
+    uint32_t                     readers;
 };
 
-template<typename ValueType>
-AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSInterface& osInterface) : AdaptiveRadixTree<ValueType>()
+template <typename ValueType> AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSInterface& osInterface) :
+    AdaptiveRadixTree<ValueType>()
 {
-    this->readers = 0;
+    this->readers     = 0;
     this->osInterface = &osInterface;
-    this->empty = osInterface.osCreateBinarySemaphore();
+    this->empty       = osInterface.osCreateBinarySemaphore();
     assert(this->empty != nullptr && "Semaphore creation failed");
     this->turn = osInterface.osCreateBinarySemaphore();
     assert(this->turn != nullptr && "Semaphore creation failed");
@@ -146,16 +145,14 @@ AtomicAdaptiveRadixTree<ValueType>::AtomicAdaptiveRadixTree(OSInterface& osInter
     this->turn->signal();
 }
 
-template<typename ValueType>
-AtomicAdaptiveRadixTree<ValueType>::~AtomicAdaptiveRadixTree()
+template <typename ValueType> AtomicAdaptiveRadixTree<ValueType>::~AtomicAdaptiveRadixTree()
 {
     delete this->empty;
     delete this->turn;
     delete this->readersMutex;
 }
 
-template<typename ValueType>
-uint64_t AtomicAdaptiveRadixTree<ValueType>::size()
+template <typename ValueType> uint64_t AtomicAdaptiveRadixTree<ValueType>::size()
 {
     if (preRead())
     {
@@ -166,7 +163,7 @@ uint64_t AtomicAdaptiveRadixTree<ValueType>::size()
     return 0;
 }
 
-template<typename ValueType>
+template <typename ValueType>
 ValueType* AtomicAdaptiveRadixTree<ValueType>::insert(const char* key, int key_len, ValueType* value)
 {
     if (preWrite())
@@ -178,7 +175,7 @@ ValueType* AtomicAdaptiveRadixTree<ValueType>::insert(const char* key, int key_l
     return nullptr;
 }
 
-template<typename ValueType>
+template <typename ValueType>
 ValueType* AtomicAdaptiveRadixTree<ValueType>::insertIfNotExists(const char* key, int key_len, ValueType* value)
 {
     if (preWrite())
@@ -190,8 +187,7 @@ ValueType* AtomicAdaptiveRadixTree<ValueType>::insertIfNotExists(const char* key
     return nullptr;
 }
 
-template<typename ValueType>
-ValueType* AtomicAdaptiveRadixTree<ValueType>::deleteValue(const char* key, int key_len)
+template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::deleteValue(const char* key, int key_len)
 {
     if (preWrite())
     {
@@ -202,8 +198,7 @@ ValueType* AtomicAdaptiveRadixTree<ValueType>::deleteValue(const char* key, int 
     return nullptr;
 }
 
-template<typename ValueType>
-ValueType* AtomicAdaptiveRadixTree<ValueType>::search(const char* key, int key_len)
+template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::search(const char* key, int key_len)
 {
     if (preRead())
     {
@@ -214,8 +209,7 @@ ValueType* AtomicAdaptiveRadixTree<ValueType>::search(const char* key, int key_l
     return nullptr;
 }
 
-template<typename ValueType>
-int AtomicAdaptiveRadixTree<ValueType>::iterateOverAll(art_callback cb, void* data)
+template <typename ValueType> int AtomicAdaptiveRadixTree<ValueType>::iterateOverAll(art_callback cb, void* data)
 {
     if (preRead())
     {
@@ -226,8 +220,8 @@ int AtomicAdaptiveRadixTree<ValueType>::iterateOverAll(art_callback cb, void* da
     return -1;
 }
 
-template<typename ValueType>
-int AtomicAdaptiveRadixTree<ValueType>::iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data)
+template <typename ValueType> int
+AtomicAdaptiveRadixTree<ValueType>::iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* data)
 {
     if (preRead())
     {
@@ -238,8 +232,7 @@ int AtomicAdaptiveRadixTree<ValueType>::iterateOverPrefix(const char* prefix, in
     return -1;
 }
 
-template<typename ValueType>
-ValueType* AtomicAdaptiveRadixTree<ValueType>::getMinimumValue()
+template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::getMinimumValue()
 {
     if (preRead())
     {
@@ -250,8 +243,7 @@ ValueType* AtomicAdaptiveRadixTree<ValueType>::getMinimumValue()
     return nullptr;
 }
 
-template<typename ValueType>
-ValueType* AtomicAdaptiveRadixTree<ValueType>::getMaximumValue()
+template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::getMaximumValue()
 {
     if (preRead())
     {
@@ -262,8 +254,7 @@ ValueType* AtomicAdaptiveRadixTree<ValueType>::getMaximumValue()
     return nullptr;
 }
 
-template<typename ValueType>
-bool AtomicAdaptiveRadixTree<ValueType>::preWrite() const
+template <typename ValueType> bool AtomicAdaptiveRadixTree<ValueType>::preWrite() const
 {
     if (!turn->wait(SETTINGS_STORAGE_MUTEX_TIMEOUT_MS))
     {
@@ -274,15 +265,13 @@ bool AtomicAdaptiveRadixTree<ValueType>::preWrite() const
     return empty->wait(SETTINGS_STORAGE_MUTEX_TIMEOUT_MS);
 }
 
-template<typename ValueType>
-void AtomicAdaptiveRadixTree<ValueType>::postWrite() const
+template <typename ValueType> void AtomicAdaptiveRadixTree<ValueType>::postWrite() const
 {
     turn->signal();
     empty->signal();
 }
 
-template<typename ValueType>
-bool AtomicAdaptiveRadixTree<ValueType>::preRead()
+template <typename ValueType> bool AtomicAdaptiveRadixTree<ValueType>::preRead()
 {
     if (!turn->wait(SETTINGS_STORAGE_MUTEX_TIMEOUT_MS))
     {
@@ -307,8 +296,7 @@ bool AtomicAdaptiveRadixTree<ValueType>::preRead()
     return true;
 }
 
-template<typename ValueType>
-void AtomicAdaptiveRadixTree<ValueType>::postRead()
+template <typename ValueType> void AtomicAdaptiveRadixTree<ValueType>::postRead()
 {
     if (!readersMutex->wait(SETTINGS_STORAGE_MUTEX_TIMEOUT_MS))
     {

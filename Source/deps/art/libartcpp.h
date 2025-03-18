@@ -5,9 +5,9 @@
 #include "art.h"
 
 #ifdef NDEBUG
-#define ASSERT_SAFE(expression, condition) expression
+    #define ASSERT_SAFE(expression, condition) expression
 #else
-#define ASSERT_SAFE(expression, condition) assert(expression  condition)
+    #define ASSERT_SAFE(expression, condition) assert(expression condition)
 #endif
 
 /**
@@ -15,8 +15,7 @@
  * It can store pointers to types of template typename ValueType
  * The user is responsable for the memory management of the values stored in the tree.
  */
-template<typename ValueType>
-class AdaptiveRadixTree
+template <typename ValueType> class AdaptiveRadixTree
 {
 public:
     /**
@@ -125,69 +124,62 @@ private:
     art_tree tree{};
 };
 
-template<typename ValueType>
-AdaptiveRadixTree<ValueType>::AdaptiveRadixTree()
+template <typename ValueType> AdaptiveRadixTree<ValueType>::AdaptiveRadixTree()
 {
     ASSERT_SAFE(art_tree_init(&tree), == 0);
 }
 
-template<typename ValueType>
-AdaptiveRadixTree<ValueType>::~AdaptiveRadixTree()
+template <typename ValueType> AdaptiveRadixTree<ValueType>::~AdaptiveRadixTree()
 {
     ASSERT_SAFE(art_tree_destroy(&tree), == 0);
 }
 
-template<typename ValueType>
-uint64_t AdaptiveRadixTree<ValueType>::size()
+template <typename ValueType> uint64_t AdaptiveRadixTree<ValueType>::size()
 {
     return art_size(&tree);
 }
 
-template<typename ValueType>
+template <typename ValueType>
 ValueType* AdaptiveRadixTree<ValueType>::insert(const char* key, int key_len, ValueType* value)
 {
     return static_cast<ValueType*>(art_insert(&tree, reinterpret_cast<const unsigned char*>(key), key_len, value));
 }
 
-template<typename ValueType>
+template <typename ValueType>
 ValueType* AdaptiveRadixTree<ValueType>::insertIfNotExists(const char* key, int key_len, ValueType* value)
 {
-    return static_cast<ValueType*>(art_insert_no_replace(&tree, reinterpret_cast<const unsigned char*>(key), key_len, value));
+    return static_cast<ValueType*>(
+        art_insert_no_replace(&tree, reinterpret_cast<const unsigned char*>(key), key_len, value));
 }
 
-template<typename ValueType>
-ValueType* AdaptiveRadixTree<ValueType>::deleteValue(const char* key, int key_len)
+template <typename ValueType> ValueType* AdaptiveRadixTree<ValueType>::deleteValue(const char* key, int key_len)
 {
     return static_cast<ValueType*>(art_delete(&tree, reinterpret_cast<const unsigned char*>(key), key_len));
 }
 
-template<typename ValueType>
-ValueType* AdaptiveRadixTree<ValueType>::search(const char* key, int key_len)
+template <typename ValueType> ValueType* AdaptiveRadixTree<ValueType>::search(const char* key, int key_len)
 {
     return static_cast<ValueType*>(art_search(&tree, reinterpret_cast<const unsigned char*>(key), key_len));
 }
 
-template<typename ValueType>
-int AdaptiveRadixTree<ValueType>::iterateOverAll(art_callback cb, void* callbackData)
+template <typename ValueType> int AdaptiveRadixTree<ValueType>::iterateOverAll(art_callback cb, void* callbackData)
 {
     return art_iter(&tree, cb, callbackData);
 }
 
-template<typename ValueType>
-int AdaptiveRadixTree<ValueType>::iterateOverPrefix(const char* prefix, int prefix_len, art_callback cb, void* callbackData)
+template <typename ValueType> int AdaptiveRadixTree<ValueType>::iterateOverPrefix(const char* prefix, int prefix_len,
+                                                                                  art_callback cb, void* callbackData)
 {
     return art_iter_prefix(&tree, reinterpret_cast<const unsigned char*>(prefix), prefix_len, cb, callbackData);
 }
 
-template<typename ValueType>
-ValueType* AdaptiveRadixTree<ValueType>::getMinimumValue()
+template <typename ValueType> ValueType* AdaptiveRadixTree<ValueType>::getMinimumValue()
 {
     art_leaf* leaf = art_minimum(&tree);
     return static_cast<ValueType*>(leaf ? leaf->value : nullptr);
 }
 
-template<typename ValueType>
-ValueType* AdaptiveRadixTree<ValueType>::getMaximumValue()
+template <typename ValueType> ValueType* AdaptiveRadixTree<ValueType>::getMaximumValue()
 {
     art_leaf* leaf = art_maximum(&tree);
     return static_cast<ValueType*>(leaf ? leaf->value : nullptr);
