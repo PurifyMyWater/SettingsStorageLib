@@ -22,7 +22,7 @@ public:
     /**
      * @brief Destroy the Adaptive Radix Tree object
      */
-    ~AtomicAdaptiveRadixTree();
+    ~AtomicAdaptiveRadixTree() override;
 
     /**
      * Disallow copying or moving the object.

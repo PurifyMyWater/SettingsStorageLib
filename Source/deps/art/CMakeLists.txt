@@ -3,12 +3,6 @@ add_library(libartcpp STATIC)
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
-if(DEFINED ENV{GITHUB_ACTION})
-    set(GIT_REPO https://vacmg:$ENV{GH_PAT}@github.com/vacmg/OSInterface.git)
-else()
-    set(GIT_REPO git@github.com:vacmg/OSInterface.git)
-endif()
-
 FetchContent_Declare(
         libart
         GIT_REPOSITORY  https://github.com/armon/libart.git
