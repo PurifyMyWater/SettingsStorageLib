@@ -23,7 +23,6 @@ jobs:
             GH_USER_NAME: vacmg
 
         steps:
-            -   run: exit 1
             -   name: "Import GitHub credentials" # ~/.gitconfig
                 run: |
                     git config --global --replace-all "url.https://$GH_USER_NAME:$GH_PAT@github.com/.insteadOf" ssh://git@github.com:
@@ -244,6 +243,12 @@ jobs:
         runs-on: ubuntu-latest
         needs:
             - merge-gatekeeper
-        if: ${{ always() && (needs.merge-gatekeeper.result == 'success' || needs.merge-gatekeeper.result == 'skipped') }}
+        if: always()
         steps:
-            - run: exit 0
+            -   name: Check merge-gatekeeper result
+                run: |
+                    if [ "${{ needs.merge-gatekeeper.result }}" = "failure" ]; then
+                      echo "Merge Gatekeeper failed."
+                      exit 1
+                    fi
+                    echo "CI passed."
