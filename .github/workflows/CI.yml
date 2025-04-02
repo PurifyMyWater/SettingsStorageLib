@@ -11,9 +11,9 @@ on:
         branches-ignore:
             - '*Test*'
     push:
-#        branches: # TODO to enable this
-#            - 'develop'
-#            - 'main'
+        branches:
+            - 'develop'
+            - 'main'
 
 jobs:
     Build:
@@ -245,4 +245,4 @@ jobs:
             - merge-gatekeeper
         if: ${{ always() && (needs.merge-gatekeeper.result == 'success' || needs.merge-gatekeeper.result == 'skipped') }}
         steps:
-            - run: echo "All jobs completed successfully!"
+            - run: exit 0
