@@ -216,7 +216,7 @@ jobs:
                         --define sonar.analysis.cache.enabled=false
 
     merge-gatekeeper:
-        if: always()
+        if: ${{ always() && github.event_name != 'push' }}
         runs-on: ubuntu-latest
         needs:
             - Build
