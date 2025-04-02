@@ -230,6 +230,10 @@ jobs:
             checks: read
             statuses: read
         steps:
+            -   name: Exit early if not a PR and avoid running merge-gatekeeper
+                if: github.event_name != 'pull_request'
+                run: exit 0
+
             -   name: Run Merge Gatekeeper
                   # NOTE: v1 is updated to reflect the latest v1.x.y. Please use any tag/branch that suits your needs:
                 #       https://github.com/upsidr/merge-gatekeeper/tags
