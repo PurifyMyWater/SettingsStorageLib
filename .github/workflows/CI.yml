@@ -11,9 +11,9 @@ on:
         branches-ignore:
             - '*Test*'
     push:
-#        branches:
-#            - 'develop'
-#            - 'main'
+        branches:
+            - 'develop'
+            - 'main'
 
 jobs:
     Build:
