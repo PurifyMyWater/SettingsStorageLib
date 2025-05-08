@@ -11,7 +11,7 @@ FetchContent_Declare(
 FetchContent_Declare(
         OSInterface
         GIT_REPOSITORY  git@github.com:vacmg/OSInterface.git
-        GIT_TAG         main
+        GIT_TAG         v1.0.0
 )
 FetchContent_MakeAvailable(CRCpp)
 FetchContent_MakeAvailable(OSInterface)
