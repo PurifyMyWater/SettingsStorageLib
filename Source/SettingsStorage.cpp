@@ -544,7 +544,6 @@ int SettingsStorage::storeSettingsInPersistentStorageCallback(void* data, const 
         }
         default:
             res = SettingsFile::InvalidState;
-            assert(false && "Invalid setting value type");
     }
     return res;
 }
