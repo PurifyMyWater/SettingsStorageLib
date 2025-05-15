@@ -13,8 +13,14 @@ FetchContent_Declare(
         GIT_REPOSITORY  git@github.com:vacmg/OSInterface.git
         GIT_TAG         v1.0.2
 )
+FetchContent_Declare(
+        SettingsFile
+        GIT_REPOSITORY  git@github.com:vacmg/SettingsFile.git
+        GIT_TAG         v1.0.0
+)
 FetchContent_MakeAvailable(CRCpp)
 FetchContent_MakeAvailable(OSInterface)
+FetchContent_MakeAvailable(SettingsFile)
 
 add_subdirectory(deps/art)
 
@@ -24,4 +30,4 @@ target_include_directories(SettingsStorageLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_compile_options(SettingsStorageLib PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 # Link the sub-libraries to the combined library
-target_link_libraries(SettingsStorageLib PUBLIC libartcpp OSInterface CRCpp)
+target_link_libraries(SettingsStorageLib PUBLIC libartcpp OSInterface CRCpp SettingsFile)
