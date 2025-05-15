@@ -301,6 +301,7 @@ template <typename ValueType> void AtomicAdaptiveRadixTree<ValueType>::postRead(
     if (!readersMutex->wait(SETTINGS_STORAGE_MUTEX_TIMEOUT_MS))
     {
         assert(false && "readersMutex wait failed in postRead");
+        abort();
     }
     // ReSharper disable once CppDFAUnreachableCode False positive
     readers--;
