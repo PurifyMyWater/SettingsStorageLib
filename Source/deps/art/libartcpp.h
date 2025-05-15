@@ -3,12 +3,7 @@
 
 #include <cassert>
 #include "art.h"
-
-#ifdef NDEBUG
-    #define ASSERT_SAFE(expression, condition) expression
-#else
-    #define ASSERT_SAFE(expression, condition) assert(expression condition)
-#endif
+#include "OSInterface.h"
 
 /**
  * @brief A C++ wrapper for the ART library

@@ -120,7 +120,7 @@ private:
     [[nodiscard]] bool           preWrite() const;
     void                         postWrite() const;
     [[nodiscard]] bool           preRead();
-    void                         postRead();
+    [[nodiscard]] bool           postRead();
     OSInterface*                 osInterface;
     OSInterface_BinarySemaphore* empty;
     OSInterface_BinarySemaphore* turn;
@@ -157,8 +157,10 @@ template <typename ValueType> uint64_t AtomicAdaptiveRadixTree<ValueType>::size(
     if (preRead())
     {
         const uint64_t size = AdaptiveRadixTree<ValueType>::size();
-        postRead();
-        return size;
+        if (postRead())
+        {
+            return size;
+        }
     }
     return 0;
 }
@@ -203,8 +205,10 @@ template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::sea
     if (preRead())
     {
         ValueType* result = AdaptiveRadixTree<ValueType>::search(key, key_len);
-        postRead();
-        return result;
+        if (postRead())
+        {
+            return result;
+        }
     }
     return nullptr;
 }
@@ -214,8 +218,10 @@ template <typename ValueType> int AtomicAdaptiveRadixTree<ValueType>::iterateOve
     if (preRead())
     {
         const int result = AdaptiveRadixTree<ValueType>::iterateOverAll(cb, data);
-        postRead();
-        return result;
+        if (postRead())
+        {
+            return result;
+        }
     }
     return -1;
 }
@@ -226,8 +232,10 @@ AtomicAdaptiveRadixTree<ValueType>::iterateOverPrefix(const char* prefix, int pr
     if (preRead())
     {
         const int result = AdaptiveRadixTree<ValueType>::iterateOverPrefix(prefix, prefix_len, cb, data);
-        postRead();
-        return result;
+        if (postRead())
+        {
+            return result;
+        }
     }
     return -1;
 }
@@ -237,8 +245,10 @@ template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::get
     if (preRead())
     {
         ValueType* result = AdaptiveRadixTree<ValueType>::getMinimumValue();
-        postRead();
-        return result;
+        if (postRead())
+        {
+            return result;
+        }
     }
     return nullptr;
 }
@@ -248,8 +258,10 @@ template <typename ValueType> ValueType* AtomicAdaptiveRadixTree<ValueType>::get
     if (preRead())
     {
         ValueType* result = AdaptiveRadixTree<ValueType>::getMaximumValue();
-        postRead();
-        return result;
+        if (postRead())
+        {
+            return result;
+        }
     }
     return nullptr;
 }
@@ -296,11 +308,11 @@ template <typename ValueType> bool AtomicAdaptiveRadixTree<ValueType>::preRead()
     return true;
 }
 
-template <typename ValueType> void AtomicAdaptiveRadixTree<ValueType>::postRead()
+template <typename ValueType> bool AtomicAdaptiveRadixTree<ValueType>::postRead()
 {
     if (!readersMutex->wait(SETTINGS_STORAGE_MUTEX_TIMEOUT_MS))
     {
-        assert(false && "readersMutex wait failed in postRead");
+        return false;
     }
     // ReSharper disable once CppDFAUnreachableCode False positive
     readers--;
@@ -309,6 +321,7 @@ template <typename ValueType> void AtomicAdaptiveRadixTree<ValueType>::postRead(
         empty->signal();
     }
     readersMutex->signal();
+    return true;
 }
 
 #endif // ATOMICLIBARTCPP_H
