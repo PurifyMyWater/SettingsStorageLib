@@ -232,7 +232,7 @@ TEST(SettingsStorage, ConstructorPersistent)
 
     SettingsStorage* settingsStorage = new SettingsStorage(linuxOSInterface, settingsFileMock);
 
-    EXPECT_EQ(SettingsFile::FileClosed, settingsFileMock->getOpenState());
+    EXPECT_EQ(SettingsFile::FileClosed, settingsFileMock->getOpenStatus());
     EXPECT_TRUE(settingsStorage->isPersistentStorageEnabled());
 
     delete settingsStorage;

@@ -204,7 +204,7 @@ void SettingsFileMock::forceClose()
     close();
 }
 
-SettingsFile::FileStatus SettingsFileMock::getOpenState()
+SettingsFile::FileStatus SettingsFileMock::getOpenStatus()
 {
     return this->fileStatus;
 }

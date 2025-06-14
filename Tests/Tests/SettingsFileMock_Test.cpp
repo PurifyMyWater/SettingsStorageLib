@@ -516,19 +516,19 @@ TEST(SettingsFileMock, FullMockWriteBuffer)
     EXPECT_EQ(expected_result, result);
 }
 
-TEST(SettingsFileMock, getOpenStateConstructor)
+TEST(SettingsFileMock, getOpenStatusConstructor)
 {
     const char* expected_internalBuffer = "internal buffer";
 
     SettingsFileMock settingsFileMock(expected_internalBuffer);
 
     SettingsFile::FileStatus expected_result = SettingsFile::FileClosed;
-    SettingsFile::FileStatus result          = settingsFileMock.getOpenState();
+    SettingsFile::FileStatus result          = settingsFileMock.getOpenStatus();
 
     EXPECT_EQ(expected_result, result);
 }
 
-TEST(SettingsFileMock, getOpenStateOpenForRead)
+TEST(SettingsFileMock, getOpenStatusOpenForRead)
 {
     const char* expected_internalBuffer = "internal buffer";
 
@@ -536,12 +536,12 @@ TEST(SettingsFileMock, getOpenStateOpenForRead)
 
     SettingsFile::FileStatus expected_result = SettingsFile::FileOpenedForRead;
     settingsFileMock.openForRead();
-    SettingsFile::FileStatus result = settingsFileMock.getOpenState();
+    SettingsFile::FileStatus result = settingsFileMock.getOpenStatus();
 
     EXPECT_EQ(expected_result, result);
 }
 
-TEST(SettingsFileMock, getOpenStateOpenForWrite)
+TEST(SettingsFileMock, getOpenStatusOpenForWrite)
 {
     const char* expected_internalBuffer = "internal buffer";
 
@@ -549,12 +549,12 @@ TEST(SettingsFileMock, getOpenStateOpenForWrite)
 
     SettingsFile::FileStatus expected_result = SettingsFile::FileOpenedForWrite;
     settingsFileMock.openForWrite();
-    SettingsFile::FileStatus result = settingsFileMock.getOpenState();
+    SettingsFile::FileStatus result = settingsFileMock.getOpenStatus();
 
     EXPECT_EQ(expected_result, result);
 }
 
-TEST(SettingsFileMock, getOpenStateClosed)
+TEST(SettingsFileMock, getOpenStatusClosed)
 {
     const char* expected_internalBuffer = "internal buffer";
 
@@ -563,7 +563,7 @@ TEST(SettingsFileMock, getOpenStateClosed)
     SettingsFile::FileStatus expected_result = SettingsFile::FileClosed;
     settingsFileMock.openForRead();
     settingsFileMock.close();
-    SettingsFile::FileStatus result = settingsFileMock.getOpenState();
+    SettingsFile::FileStatus result = settingsFileMock.getOpenStatus();
 
     EXPECT_EQ(expected_result, result);
 }
