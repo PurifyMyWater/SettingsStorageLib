@@ -337,9 +337,9 @@ public:
     [[nodiscard]] SettingError_t putSettingValueAsString(const char* key, const char* value) const;
 
     /**
-     * @brief This function returns the value of the setting with the provided key.
+     * @brief This function returns the default value of the setting with the provided key.
      * @param key The key of the setting to get.
-     * @param outputValue The value of the setting.
+     * @param outputValue The default value of the setting.
      * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the
      * permissions are not returned.
      * @return SettingError_t The result of the operation.
@@ -352,9 +352,9 @@ public:
                                                         SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
-     * @brief This function returns the value of the setting with the provided key.
+     * @brief This function returns the default value of the setting with the provided key.
      * @param key The key of the setting to get.
-     * @param outputValue The value of the setting.
+     * @param outputValue The default value of the setting.
      * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the
      * permissions are not returned.
      * @return SettingError_t The result of the operation.
@@ -367,9 +367,9 @@ public:
                                                          SettingPermissions_t* outputPermissions = nullptr) const;
 
     /**
-     * @brief This function returns the value of the setting with the provided key.
+     * @brief This function returns the default value of the setting with the provided key.
      * @param key The key of the setting to get.
-     * @param outputValueBuffer The value of the setting. Must be a buffer with enough space to store the value.
+     * @param outputValueBuffer The default value of the setting. Must be a buffer with enough space to store the value.
      * @param outputValueSize The size of the outputValueBuffer.
      * @param outputPermissions Optional output parameter to store the permissions of the setting. If it is nullptr, the
      * permissions are not returned.
