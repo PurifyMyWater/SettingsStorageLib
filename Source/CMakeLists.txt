@@ -16,7 +16,7 @@ FetchContent_Declare(
 FetchContent_Declare(
         SettingsFile
         GIT_REPOSITORY  git@github.com:vacmg/SettingsFile.git
-        GIT_TAG         v1.0.0
+        GIT_TAG         v1.0.1
 )
 FetchContent_MakeAvailable(CRCpp)
 FetchContent_MakeAvailable(OSInterface)
