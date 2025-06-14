@@ -116,9 +116,6 @@ public:
     /// String with the name of the component.
     constexpr static const char* const COMPONENT_TAG = "PurifyMyWater - SettingsStorage";
 
-    /// The data structure used internally to store the settings.
-    typedef AtomicAdaptiveRadixTree<SettingValue_t> Settings_t;
-
     /**
      * @brief Build a new empty Settings Storage object.
      *
@@ -391,6 +388,7 @@ public:
     SettingsStorage& operator=(SettingsStorage&&) = delete;
 
 private:
+    typedef AtomicAdaptiveRadixTree<SettingValue_t> Settings_t;
     typedef std::tuple<SettingPermissions_t, SettingPermissionsFilterMode_t, SettingsKeysList_t*>
                                                                                    SettingsListCallbackData_t;
     typedef std::tuple<SettingsFile*, uint32_t*, bool*, CRC::Table<unsigned, 32>*> SettingsStoreCallbackData_t;
