@@ -26,7 +26,7 @@ public:
 
     void forceClose() override;
 
-    FileStatus getOpenState() override;
+    FileStatus getOpenStatus() override;
 
     [[nodiscard]] char* _getInternalBuffer() const;
 
