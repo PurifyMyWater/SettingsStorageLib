@@ -241,6 +241,7 @@ jobs:
 
     success:
         runs-on: ubuntu-latest
+        permissions: {}
         needs:
             - merge-gatekeeper
         if: always()
