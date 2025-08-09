@@ -1,6 +1,8 @@
 # https://cpp-linter.github.io/cpp-linter-action/
 
 name: CI
+permissions:
+    contents: read
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
